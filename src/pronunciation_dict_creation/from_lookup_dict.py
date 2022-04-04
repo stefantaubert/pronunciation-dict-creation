@@ -13,7 +13,7 @@ from typing import Literal, Optional, Set, Tuple
 from pronunciation_dict_parser import Pronunciation, PronunciationDict, Symbol, Word, Pronunciations
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, to_text, update_dictionary
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, to_text, update_dictionary
 from pronunciation_dict_parser import parse_dictionary_from_txt
 from pronunciation_dict_creation.word2pronunciation import get_pronunciation_from_word
 
@@ -39,24 +39,21 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
                       help="split words on hyphen symbol before lookup")
   parser.add_argument("--unresolved-out", metavar="PATH", type=get_optional(parse_path),
                       help="write unresolved vocabulary to this file", default=default_unresolved_out)
-  add_encoding_argument(parser, "--vocabulary-encoding", "encoding of vocabulary")
-  add_encoding_argument(parser, "--dictionary-encoding", "encoding of vocabulary")
-  add_encoding_argument(parser, "--reference-dictionary-encoding", "encoding of vocabulary")
-  add_encoding_argument(parser, "--unresolved-out-encoding", "encoding of unresolved-out")
+  add_encoding_argument(parser, "--encoding", "encoding of vocabulary")
   add_n_jobs_argument(parser)
   add_chunksize_argument(parser)
   add_maxtaskperchild_argument(parser)
   return app_try_add_vocabulary_from_pronunciations
 
 
-def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, vocabulary_encoding: str, dictionary: Path, dictionary_encoding: str, reference_dictionary: Path, reference_dictionary_encoding: str, ignore_case: bool, punctuation: OrderedSet[Symbol], consider_annotations: bool, split_on_hyphen: bool, duplicate_handling: str, unresolved_out: Optional[Path], unresolved_out_encoding: str, n_jobs, maxtasksperchild: Optional[int], chunksize: int) -> bool:
+def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, encoding: str, dictionary: Path, reference_dictionary: Path, ignore_case: bool, punctuation: OrderedSet[Symbol], consider_annotations: bool, split_on_hyphen: bool, duplicate_handling: str, unresolved_out: Optional[Path], n_jobs, maxtasksperchild: Optional[int], chunksize: int) -> bool:
   assert vocabulary.is_file()
   assert reference_dictionary.is_file()
   logger = getLogger(__name__)
 
   if dictionary.exists():
     try:
-      dictionary_instance = parse_dictionary_from_txt(dictionary, dictionary_encoding)
+      dictionary_instance = parse_dictionary_from_txt(dictionary, PROG_ENCODING)
     except Exception as ex:
       logger.error("Dictionary couldn't be read.")
       return False
@@ -64,14 +61,14 @@ def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, vocabulary_enco
     dictionary_instance = OrderedDict()
 
   try:
-    vocabulary_content = vocabulary.read_text(vocabulary_encoding)
+    vocabulary_content = vocabulary.read_text(encoding)
   except Exception as ex:
     logger.error("Vocabulary couldn't be read.")
     return False
 
   try:
     reference_dictionary_instance = parse_dictionary_from_txt(
-      reference_dictionary, reference_dictionary_encoding)
+      reference_dictionary, PROG_ENCODING)
   except Exception as ex:
     logger.error("Reference dictionary couldn't be read.")
     return False
@@ -85,7 +82,7 @@ def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, vocabulary_enco
 
   dict_content = to_text(dictionary_instance, "\t", " ", True, False, "")
   try:
-    dictionary.write_text(dict_content, dictionary_encoding)
+    dictionary.write_text(dict_content, PROG_ENCODING)
   except Exception as ex:
     logger.error("Dictionary couldn't be written.")
     return False
@@ -96,7 +93,7 @@ def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, vocabulary_enco
     if unresolved_out is not None:
       unresolved_out_content = "\n".join(unresolved_words)
       try:
-        unresolved_out.write_text(unresolved_out_content, unresolved_out_encoding)
+        unresolved_out.write_text(unresolved_out_content, "UTF-8")
       except Exception as ex:
         logger.error("Unresolved output couldn't be created!")
         return False
