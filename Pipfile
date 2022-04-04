@@ -1,0 +1,24 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pronunciation-dict-creation = {editable = true, path = "."}
+autopep8 = "*"
+pylint = "*"
+pycodestyle = "*"
+isort = "*"
+pipenv-setup = "*"
+rope = "*"
+pytest = "*"
+
+[packages]
+pronunciation_dict_parser = {editable = true, path = "./../pronunciation_dict_parser"}
+g2p_en = {editable = true, path = "./../g2p"}
+epitran = "*"
+dragonmapper = "*"
+ordered-set = "*"
+
+[requires]
+python_version = "3.8"
