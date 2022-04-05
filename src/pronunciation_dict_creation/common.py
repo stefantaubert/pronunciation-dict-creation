@@ -46,11 +46,10 @@ def get_dictionary(pronunciations_to_i: Pronunciations, words_to_lookup: Ordered
   for i, pronunciations in pronunciations_to_i:
     word = words_to_lookup[i]
     if pronunciations is None:
-      unresolved_words.add(unresolved_words)
+      unresolved_words.add(word)
       continue
-    else:
-      assert word not in resulting_dict
-      resulting_dict[word] = pronunciations
+    assert word not in resulting_dict
+    resulting_dict[word] = pronunciations
   return resulting_dict, unresolved_words
 
 

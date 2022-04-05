@@ -15,6 +15,10 @@ def symbols_join(list_of_pronunciations: List[Pronunciation], join_symbol: Symbo
   return tuple(res)
 
 
+def pronunciation_lower(pronunciation: Pronunciation) -> Pronunciation:
+  result = tuple(symbol.lower() for symbol in pronunciation)
+  return result
+
 def get_pronunciation_from_word(word: Pronunciation, trim_symbols: Set[Symbol], split_on_hyphen: bool, get_pronunciation: Callable[[Pronunciation], Pronunciation], consider_annotation: bool, annotation_split_symbol: Optional[Symbol]) -> Pronunciation:
   if consider_annotation and len(annotation_split_symbol) != 1:
     raise ValueError("annotation_split_symbol has to be a string of length 1.")
@@ -65,13 +69,23 @@ def not_annotation_word2pronunciation(word: Pronunciation, trim_symbols: Set[Sym
 def add_pronunciation_for_word(word: Pronunciation, split_on_hyphen: bool, get_pronunciation: Callable[[Pronunciation], Pronunciation]) -> Pronunciation:
   if split_on_hyphen:
     return add_pronunciation_for_splitted_word(word, get_pronunciation)
-  return get_pronunciation(word)
+  result = get_pronunciation(word)
+  if not isinstance(result, tuple):
+    raise Exception("get_pronunciation needs to return a tuple.")
+  return result
 
 
 def add_pronunciation_for_splitted_word(word: Pronunciation, get_pronunciation: Callable[[Pronunciation], Pronunciation]) -> Pronunciation:
   splitted_words = symbols_split_iterable(word, HYPHEN)
-  pronunciations = [get_pronunciation(single_word) if single_word != () else ()
-                    for single_word in splitted_words]
+  pronunciations = []
+  for single_word in splitted_words:
+    if single_word != ():
+      item = get_pronunciation(single_word)
+      if not isinstance(item, tuple):
+        raise Exception("get_pronunciation needs to return a tuple.")
+    else:
+      item = ()
+    pronunciations.append(item)
   pronunciations_with_hyphens = symbols_join(pronunciations, HYPHEN)
   return pronunciations_with_hyphens
 

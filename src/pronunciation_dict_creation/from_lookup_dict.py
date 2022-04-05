@@ -5,8 +5,8 @@ from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
-from typing import Optional, Tuple
-from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations
+from typing import Optional, Set, Tuple
+from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
 from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, save_dict
@@ -17,6 +17,7 @@ from pronunciation_dict_creation.word2pronunciation import get_pronunciation_fro
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):
   default_oov_out = Path(gettempdir()) / "oov.txt"
   parser.description = "Transcribe vocabulary with a given pronunciation dictionary and add it to an existing pronunciation dictionary or create one."
+  # todo support multiple files
   parser.add_argument("vocabulary", metavar='vocabulary', type=parse_existing_file,
                       help="file containing the vocabulary (words separated by line)")
   parser.add_argument("dictionary", metavar='dictionary', type=parse_path,
@@ -37,10 +38,10 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
   add_n_jobs_argument(parser)
   add_chunksize_argument(parser)
   add_maxtaskperchild_argument(parser)
-  return app_try_add_vocabulary_from_pronunciations
+  return get_pronunciations_files
 
 
-def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, encoding: str, dictionary: Path, reference_dictionary: Path, ignore_case: bool, trim: OrderedSet[Symbol], consider_annotations: bool, split_on_hyphen: bool, oov_out: Optional[Path], n_jobs, maxtasksperchild: Optional[int], chunksize: int) -> bool:
+def get_pronunciations_files(vocabulary: Path, encoding: str, dictionary: Path, reference_dictionary: Path, ignore_case: bool, trim: OrderedSet[Symbol], consider_annotations: bool, split_on_hyphen: bool, oov_out: Optional[Path], n_jobs, maxtasksperchild: Optional[int], chunksize: int) -> bool:
   assert vocabulary.is_file()
   assert reference_dictionary.is_file()
   logger = getLogger(__name__)
@@ -62,7 +63,7 @@ def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, encoding: str, 
   params = DefaultParameters(vocabulary_words, consider_annotations, "/",
                              split_on_hyphen, trim, n_jobs, maxtasksperchild, chunksize)
 
-  dictionary_instance, unresolved_words = get_existing_pronunciations_from_vocabulary(
+  dictionary_instance, unresolved_words = get_pronunciations(
     params, reference_dictionary_instance, ignore_case)
 
   success = save_dict(dictionary_instance, dictionary)
@@ -87,18 +88,13 @@ def app_try_add_vocabulary_from_pronunciations(vocabulary: Path, encoding: str, 
   return True
 
 
-def get_existing_pronunciations_from_vocabulary(default_params: DefaultParameters, lookup_dict: PronunciationDict, lookup_ignore_case: bool) -> Tuple[PronunciationDict, OrderedSet[Word]]:
-  internal_lookup = partial(
-    lookup_in_dict_process,
-    ignore_case=lookup_ignore_case,
-  )
-
+def get_pronunciations(default_params: DefaultParameters, lookup_dict: PronunciationDict, lookup_ignore_case: bool) -> Tuple[PronunciationDict, OrderedSet[Word]]:
   lookup_method = partial(
-    get_pronunciation_from_word,
+    process_get_pronunciation,
+    ignore_case=lookup_ignore_case,
     trim_symbols=default_params.trim_symbols,
     split_on_hyphen=default_params.split_on_hyphen,
-    get_pronunciation=internal_lookup,
-    consider_annotation=default_params.consider_annotations,
+    consider_annotations=default_params.consider_annotations,
     annotation_split_symbol=default_params.annotation_split_symbol,
   )
 
@@ -124,40 +120,45 @@ process_lookup_dict: PronunciationDict = None
 
 def __init_pool_prepare_cache_mp(words: OrderedSet[Word], lookup_dict: PronunciationDict) -> None:
   global process_unique_words
+  global process_lookup_dict
   process_unique_words = words
-  lookup_dict = lookup_dict
+  process_lookup_dict = lookup_dict
 
 
-def process_get_pronunciation(word_i: int, ignore_case: bool) -> Tuple[int, Pronunciations]:
+def process_get_pronunciation(word_i: int, ignore_case: bool, trim_symbols: Set[Symbol], split_on_hyphen: bool, consider_annotations: bool, annotation_split_symbol: Optional[Symbol]) -> Tuple[int, Optional[Pronunciations]]:
   global process_unique_words
   global process_lookup_dict
-  assert word_i in process_unique_words
+  assert 0 <= word_i < len(process_unique_words)
   word = process_unique_words[word_i]
-  
-  get_pronunciation_from_word(
-    trim_symbols=default_params.trim_symbols,
-    split_on_hyphen=default_params.split_on_hyphen,
-    get_pronunciation=internal_lookup,
-    consider_annotation=default_params.consider_annotations,
-    annotation_split_symbol=default_params.annotation_split_symbol,
+
+  # TODO support all entries; also create all combinations with hyphen then
+  lookup_method = partial(
+    lookup_first_entry_in_dict,
+    ignore_case=ignore_case,
   )
 
-def lookup_in_dict(word: str, ignore_case: bool) -> Optional[Pronunciations]:
-  if ignore_case:
-    word = word.lower()
-  result = process_lookup_dict.get(word, None)
-  return result
+  pronunciation = get_pronunciation_from_word(
+    word=tuple(word),
+    trim_symbols=trim_symbols,
+    split_on_hyphen=split_on_hyphen,
+    get_pronunciation=lookup_method,
+    consider_annotation=consider_annotations,
+    annotation_split_symbol=annotation_split_symbol,
+  )
+
+  if None in pronunciation:
+    return word_i, None
+  return word_i, OrderedSet((pronunciation,))
 
 
-def lookup_in_dict_process(word_i: int, ignore_case: bool) -> Tuple[int, Pronunciations]:
-  global process_unique_words
-  global process_lookup_dict
-  assert word_i in process_unique_words
-  word = process_unique_words[word_i]
+def lookup_first_entry_in_dict(word: Pronunciation, ignore_case: bool) -> Pronunciation:
+  word_str = "".join(word)
   if ignore_case:
-    word = word.lower()
-  result = process_lookup_dict.get(word, None)
-  return word_i, result
+    word_str = word_str.lower()
+  result = process_lookup_dict.get(word_str, None)
+  if result is None:
+    return (None,)
+  return result[0]
 
 
 def dict_words_to_lower(lookup_dict: PronunciationDict) -> PronunciationDict:
