@@ -19,7 +19,7 @@ def get_pronunciation_from_word(word: Pronunciation, trim_symbols: Set[Symbol], 
   if consider_annotation and len(annotation_split_symbol) != 1:
     raise ValueError("annotation_split_symbol has to be a string of length 1.")
   if consider_annotation and is_annotation(word, annotation_split_symbol):
-    annotations = annotation2pronunciation(word, annotation_split_symbol)
+    annotations = get_annotation_content(word, annotation_split_symbol)
     return annotations
   new_pronun = not_annotation_word2pronunciation(
     word, trim_symbols, split_on_hyphen, get_pronunciation)
@@ -29,14 +29,6 @@ def get_pronunciation_from_word(word: Pronunciation, trim_symbols: Set[Symbol], 
 def is_annotation(word: Pronunciation, annotation_split_symbol: Symbol) -> bool:
   # TODO fixed bug if word is ()
   return len(word) > 0 and word[0] == annotation_split_symbol and word[-1] == annotation_split_symbol
-
-
-def annotation2pronunciation(annotation: Pronunciation, annotation_split_symbol: Symbol) -> Pronunciation:
-  return get_annotation_content(annotation, annotation_split_symbol)
-  # assert is_annotation(annotation, annotation_split_symbol)
-  # single_annotations = tuple(
-  #   [element for element in annotation if element != annotation_split_symbol])
-  # return single_annotations
 
 
 def get_annotation_content(annotation: Pronunciation, annotation_split_symbol: Symbol) -> Pronunciation:
