@@ -8,6 +8,7 @@ from pronunciation_dict_creation.downloading import get_downloading_parser
 from pronunciation_dict_creation.from_lookup_dict import get_app_try_add_vocabulary_from_pronunciations_parser
 from pronunciation_dict_creation.merging import get_merging_parser
 from pronunciation_dict_creation.pronunciations_remove_symbols import get_pronunciations_remove_symbols_parser
+from pronunciation_dict_creation.words_remove_symbols import get_words_remove_symbols_parser
 
 __version__ = "0.0.1"
 
@@ -38,6 +39,8 @@ def _init_parser():
      get_merging_parser),
     ("remove-symbols-from-pronunciations", "remove symbols from pronunciations",
      get_pronunciations_remove_symbols_parser),
+    ("remove-symbols-from-words", "remove symbols from words",
+     get_words_remove_symbols_parser),
   )
 
   for command, description, method in methods:
