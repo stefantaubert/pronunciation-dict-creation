@@ -127,6 +127,7 @@ def to_text(pronunciation_dict: PronunciationDict, word_pronunciation_sep: Symbo
 def save_dict(pronunciation_dict: PronunciationDict, path: Path, word_pronunciation_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL, encoding: str = PROG_ENCODING) -> bool:
   dict_content = to_text(pronunciation_dict, word_pronunciation_sep, symbol_sep,
                          include_counter, only_first_pronunciation, empty_symbol)
+  path.parent.mkdir(parents=True, exist_ok=True)
   try:
     path.write_text(dict_content, encoding)
   except Exception as ex:

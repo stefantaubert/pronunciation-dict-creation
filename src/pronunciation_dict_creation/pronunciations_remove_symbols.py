@@ -34,7 +34,7 @@ def get_pronunciations_remove_symbols_parser(parser: ArgumentParser):
   parser.add_argument("--keep-empty", action="store_true",
                       help="if a pronunciation will be empty after removal, keep the corresponding word in the dictionary and assign the value of empty-symbol")
   parser.add_argument("--empty-symbol", type=get_optional(parse_non_empty_or_whitespace),
-                      help="if keep-empty: assign this symbol to the word where no pronunciations result because of the symbol removal", default="SIL")
+                      help="if keep-empty: assign this symbol to the word where no pronunciations result because of the symbol removal", default="sil")
   parser.add_argument("--removed-out", metavar="PATH", type=get_optional(parse_path),
                       help="write removed words (i.e., words that had no pronunciation anymore) to this file", default=default_removed_out)
   add_n_jobs_argument(parser)
@@ -77,6 +77,7 @@ def remove_symbols_from_pronunciations(dictionaries: OrderedSet[Path], symbols: 
       logger.warning(f"{len(removed_words)} words were removed.")
       if removed_out is not None:
         content = "\n".join(removed_words)
+        removed_out.parent.mkdir(parents=True, exist_ok=True)
         try:
           removed_out.write_text(content, "UTF-8")
         except Exception as ex:

@@ -77,6 +77,7 @@ def remove_symbols_from_words(dictionaries: OrderedSet[Path], symbols: OrderedSe
       logger.warning(f"{len(removed_words)} words were removed.")
       if removed_out is not None:
         content = "\n".join(removed_words)
+        removed_out.parent.mkdir(parents=True, exist_ok=True)
         try:
           removed_out.write_text(content, "UTF-8")
         except Exception as ex:

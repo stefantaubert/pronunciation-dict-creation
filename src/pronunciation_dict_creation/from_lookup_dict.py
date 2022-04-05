@@ -76,6 +76,7 @@ def get_pronunciations_files(vocabulary: Path, encoding: str, dictionary: Path, 
     logger.warning("Not all words were contained in the reference dictionary")
     if oov_out is not None:
       unresolved_out_content = "\n".join(unresolved_words)
+      oov_out.parent.mkdir(parents=True, exist_ok=True)
       try:
         oov_out.write_text(unresolved_out_content, "UTF-8")
       except Exception as ex:

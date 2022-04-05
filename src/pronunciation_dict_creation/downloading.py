@@ -14,7 +14,7 @@ from pathlib import Path
 from pronunciation_dict_parser.core.parser import parse_url
 from pronunciation_dict_creation.argparse_helper import parse_path
 
-from pronunciation_dict_creation.common import PROG_ENCODING, to_text
+from pronunciation_dict_creation.common import PROG_ENCODING, save_dict, to_text
 
 
 @dataclass()
@@ -59,11 +59,8 @@ def app_download(dictionary: str, path: Path) -> bool:
   logger = getLogger(__name__)
 
   pronunciation_dict = download_dict(dictionary)
-  output_content = to_text(pronunciation_dict)
-  try:
-    path.write_text(output_content, PROG_ENCODING)
-  except Exception as ex:
-    logger.error("Couldn't write to file.")
+  success = save_dict(pronunciation_dict, path)
+  if not success:
     return False
 
   logger.info(f"Written dictionary to: {path.absolute()}")
