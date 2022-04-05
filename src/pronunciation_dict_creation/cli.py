@@ -6,6 +6,7 @@ from logging import getLogger
 from typing import Callable, Dict, Generator, List, Tuple
 from pronunciation_dict_creation.downloading import get_downloading_parser
 from pronunciation_dict_creation.from_lookup_dict import get_app_try_add_vocabulary_from_pronunciations_parser
+from pronunciation_dict_creation.merging import get_merging_parser
 
 __version__ = "0.0.1"
 
@@ -22,7 +23,7 @@ def formatter(prog):
 def _init_parser():
   main_parser = ArgumentParser(
     formatter_class=formatter,
-    description="This program provides methods to select data.",
+    description="This program provides methods to create pronunciation dictionaries.",
   )
   main_parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
   subparsers = main_parser.add_subparsers(help="description")
@@ -30,8 +31,10 @@ def _init_parser():
   methods: Dict[str, Tuple[Parsers, str]] = (
     ("download", "download public dictionary",
      get_downloading_parser),
-    ("add-with-dict", "add vocabulary with a dictionary",
+    ("create-from-dict", "add vocabulary with a dictionary",
      get_app_try_add_vocabulary_from_pronunciations_parser),
+    ("merge", "merge dictionaries",
+     get_merging_parser),
   )
 
   for command, description, method in methods:
@@ -65,6 +68,9 @@ def configure_logger() -> None:
 
 def parse_args(args: List[str]):
   configure_logger()
+  logger = getLogger(__name__)
+  logger.debug("Received args:")
+  logger.debug(args)
   parser = _init_parser()
   received_args = parser.parse_args(args)
   params = vars(received_args)

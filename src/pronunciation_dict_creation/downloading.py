@@ -23,10 +23,12 @@ class PublicDict():
   encoding: str
   description: str
 
+# cmu old: "http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b"
+
 
 public_dicts = OrderedDict((
   ("cmu", PublicDict(
-    "http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b",
+    "https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict",
     "ISO-8859-1", "CMU (ARPA)")),
   ("librispeech", PublicDict(
     "https://www.openslr.org/resources/11/librispeech-lexicon.txt",

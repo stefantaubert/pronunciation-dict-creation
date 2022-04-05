@@ -1,19 +1,17 @@
+from collections import OrderedDict
+from logging import getLogger
+from pathlib import Path
 from pronunciation_dict_parser.core.parser import PronunciationDict
 from pronunciation_dict_parser.core.types import Symbol
 import argparse
 from argparse import ArgumentParser
 from multiprocessing import cpu_count
-from tqdm import tqdm
 from dataclasses import dataclass
-from email.policy import default
-from functools import partial
-from multiprocessing.pool import Pool
 from typing import List, Literal, Optional, Set, Tuple
-from pronunciation_dict_parser import Pronunciation, PronunciationDict, Symbol, Word, Pronunciations
+from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_codec, parse_positive_integer
 
-from pronunciation_dict_creation.word2pronunciation import get_pronunciation_from_word
 
 DEFAULT_ENCODING = "UTF-8"
 DEFAULT_N_JOBS = cpu_count()
@@ -31,16 +29,29 @@ PROG_ENCODING = "UTF-8"
 
 @dataclass()
 class DefaultParameters():
-  target_dictionary: PronunciationDict
   vocabulary: OrderedSet[Word]
   consider_annotations: bool
   annotation_split_symbol: Optional[str]
-  handle_duplicates: Literal["ignore", "add", "replace"]
+  # handle_duplicates: Literal["ignore", "add", "replace"]
   split_on_hyphen: bool
   trim_symbols: Set[Symbol]
   n_jobs: int
   maxtasksperchild: Optional[int]
   chunksize: int
+
+
+def get_dictionary(pronunciations_to_i: Pronunciations, words_to_lookup: OrderedSet[Word]) -> Tuple[PronunciationDict, OrderedSet[Word]]:
+  resulting_dict = OrderedDict()
+  unresolved_words = OrderedSet()
+  for i, pronunciations in pronunciations_to_i:
+    word = words_to_lookup[i]
+    if pronunciations is None:
+      unresolved_words.add(unresolved_words)
+      continue
+    else:
+      assert word not in resulting_dict
+      resulting_dict[word] = pronunciations
+  return resulting_dict, unresolved_words
 
 
 def update_dictionary(target_dictionary: PronunciationDict, pronunciations_to_i: Pronunciations, words_to_lookup: OrderedSet[Word], handle_duplicates: Literal["ignore", "add", "replace"]) -> OrderedSet[Word]:
@@ -112,3 +123,15 @@ def to_text(pronunciation_dict: PronunciationDict, word_pronunciation_sep: Symbo
         break
   dict_content = dict_content.rstrip("\n")
   return dict_content
+
+
+def save_dict(pronunciation_dict: PronunciationDict, path: Path, word_pronunciation_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL, encoding: str = PROG_ENCODING) -> bool:
+  dict_content = to_text(pronunciation_dict, word_pronunciation_sep, symbol_sep,
+                         include_counter, only_first_pronunciation, empty_symbol)
+  try:
+    path.write_text(dict_content, encoding)
+  except Exception as ex:
+    logger = getLogger(__name__)
+    logger.error("Dictionary couldn't be written.")
+    return False
+  return True
