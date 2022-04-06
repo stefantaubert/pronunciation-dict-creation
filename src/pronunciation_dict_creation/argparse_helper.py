@@ -107,6 +107,13 @@ def parse_non_negative_float(value: str) -> float:
   return value
 
 
+def parse_float_0_to_1(value: str) -> float:
+  value = parse_float(value)
+  if not 0 <= value <= 1:
+    raise ArgumentTypeError("Value needs to be between zero (incl.) and one (incl.)!")
+  return value
+
+
 def parse_integer(value: str) -> int:
   value = parse_required(value)
   if not value.isdigit():
@@ -127,4 +134,3 @@ def parse_non_negative_integer(value: str) -> int:
   if not value >= 0:
     raise ArgumentTypeError("Value needs to be greater than or equal to zero!")
   return value
-

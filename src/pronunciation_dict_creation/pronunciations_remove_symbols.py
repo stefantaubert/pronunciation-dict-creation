@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from collections import OrderedDict
 from functools import partial
 from logging import getLogger
 from multiprocessing.pool import Pool
@@ -7,8 +8,7 @@ from tempfile import gettempdir
 from pronunciation_dict_parser import PronunciationDict, Symbol
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import parse_existing_file
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, try_save_dict
-from pronunciation_dict_parser import parse_dictionary_from_txt
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, try_load_dict, try_save_dict
 
 from argparse import ArgumentParser
 from logging import getLogger
@@ -21,7 +21,9 @@ from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronuncia
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
 from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, add_maxtaskperchild_argument, add_n_jobs_argument, try_save_dict
-from pronunciation_dict_parser import parse_dictionary_from_txt
+
+
+DEFAULT_EMPTY_WEIGHT = 1
 
 
 def get_pronunciations_remove_symbols_parser(parser: ArgumentParser):
@@ -52,9 +54,8 @@ def remove_symbols_from_pronunciations(dictionaries: OrderedSet[Path], symbols: 
     return False
 
   for dictionary_path in dictionaries:
-    try:
-      dictionary_instance = parse_dictionary_from_txt(dictionaries[0], PROG_ENCODING)
-    except Exception as ex:
+    dictionary_instance = try_load_dict(dictionaries[0])
+    if dictionary_instance is None:
       logger.error(f"Dictionary '{dictionary_path}' couldn't be read.")
       return False
 
@@ -107,20 +108,21 @@ def remove_symbols(dictionary: PronunciationDict, symbols: OrderedSet[Symbol], k
 
   changed_counter = 0
   removed_words = OrderedSet()
-  for word, pronunciations in pronunciations_to_i:
-    pronunciations_unchanged = pronunciations is None
+  for word, new_pronunciations in pronunciations_to_i:
+    pronunciations_unchanged = new_pronunciations is None
     if pronunciations_unchanged:
       continue
 
-    if len(pronunciations) == 0:
+    if len(new_pronunciations) == 0:
       if keep_empty:
         assert empty_symbol is not None
-        dictionary[word] = tuple(empty_symbol,)
+        empty_pair = ((empty_symbol,), DEFAULT_EMPTY_WEIGHT)
+        dictionary[word] = OrderedDict(empty_pair,)
       else:
         removed_words.add(word)
         dictionary.pop(word)
     else:
-      dictionary[word] = pronunciations
+      dictionary[word] = new_pronunciations
     changed_counter += 1
 
   return removed_words, changed_counter
@@ -138,19 +140,21 @@ def process_get_pronunciation(word: Word, symbols: Set[Symbol]) -> Tuple[Word, O
   global process_lookup_dict
   assert word in process_lookup_dict
   pronunciations = process_lookup_dict[word]
-  new_pronunciations = OrderedSet()
+  new_pronunciations = OrderedDict()
   changed_anything = False
-  for pronunciation in pronunciations:
+  for pronunciation, weight in pronunciations.items():
     new_pronunciation = tuple(
       symbol
       for symbol in pronunciation
       if symbol not in symbols
     )
 
-    if len(new_pronunciation) > 0:
-      new_pronunciations.add(new_pronunciation)
-
     if new_pronunciation != pronunciation:
+      if len(new_pronunciation) > 0:
+        if new_pronunciation in new_pronunciations:
+          new_pronunciations[new_pronunciation] += weight
+        else:
+          new_pronunciations[new_pronunciation] = weight
       changed_anything = True
 
   if changed_anything:

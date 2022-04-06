@@ -56,6 +56,7 @@ def get_downloading_parser(parser: ArgumentParser):
                       type=str, help="pronunciation dictionary")
   parser.add_argument("--path", type=parse_path, metavar='PATH',
                       help="file where to output pronunciation dictionary", default=default_path)
+  # todo add mp params
   return app_download
 
 

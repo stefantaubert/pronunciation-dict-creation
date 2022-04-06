@@ -3,13 +3,11 @@ from functools import partial
 from logging import getLogger
 from multiprocessing.pool import Pool
 from pathlib import Path
-import symbol
 from typing import Literal
 from pronunciation_dict_parser import PronunciationDict, Symbol
 from ordered_set import OrderedSet
-from pronunciation_dict_creation.argparse_helper import parse_existing_file, parse_non_empty, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, try_save_dict
-from pronunciation_dict_parser import parse_dictionary_from_txt
+from pronunciation_dict_creation.argparse_helper import parse_existing_file, parse_float_0_to_1, parse_path
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, merge_pronunciations, try_load_dict, try_save_dict
 
 from tempfile import gettempdir
 from argparse import ArgumentParser
@@ -18,12 +16,11 @@ from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
-from typing import Optional, Set, Tuple
-from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation
+from typing import Optional, Tuple
+from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations
 from ordered_set import OrderedSet
-from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, try_save_dict
-from pronunciation_dict_parser import parse_dictionary_from_txt
+from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_path
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, add_maxtaskperchild_argument, add_n_jobs_argument, try_save_dict
 
 
 def get_words_remove_symbols_parser(parser: ArgumentParser):
@@ -39,27 +36,28 @@ def get_words_remove_symbols_parser(parser: ArgumentParser):
   #                     help="if a pronunciation will be empty after removal, remove the corresponding word from the dictionary")
   parser.add_argument("--removed-out", metavar="PATH", type=get_optional(parse_path),
                       help="write removed words to this file", default=default_removed_out)
+  parser.add_argument("--ratio", type=parse_float_0_to_1,
+                      help="merge pronunciations weights with these ratio, i.e., existing weights * ratio + weights to merge * (1-ratio)", default=0.5)
   add_n_jobs_argument(parser)
   add_chunksize_argument(parser)
   add_maxtaskperchild_argument(parser)
   return remove_symbols_from_words
 
 
-def remove_symbols_from_words(dictionaries: OrderedSet[Path], symbols: OrderedSet[Symbol], mode: str, removed_out: Optional[Path], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> bool:
+def remove_symbols_from_words(dictionaries: OrderedSet[Path], symbols: OrderedSet[Symbol], mode: str, ratio: float, removed_out: Optional[Path], n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> bool:
   assert len(dictionaries) > 0
   logger = getLogger(__name__)
 
   symbols_str = ''.join(symbols)
 
   for dictionary_path in dictionaries:
-    try:
-      dictionary_instance = parse_dictionary_from_txt(dictionaries[0], PROG_ENCODING)
-    except Exception as ex:
+    dictionary_instance = try_load_dict(dictionaries[0])
+    if dictionary_instance is None:
       logger.error(f"Dictionary '{dictionary_path}' couldn't be read.")
       return False
 
-    removed_words, changed_counter = remove_symbols(dictionary_instance, symbols_str, mode,
-                                                    n_jobs, maxtasksperchild, chunksize)
+    removed_words, changed_counter = remove_symbols(
+      dictionary_instance, symbols_str, mode, ratio, n_jobs, maxtasksperchild, chunksize)
 
     if changed_counter == 0:
       logger.info("Didn't changed anything.")
@@ -89,7 +87,7 @@ def remove_symbols_from_words(dictionaries: OrderedSet[Path], symbols: OrderedSe
       logger.info("No words were removed.")
 
 
-def remove_symbols(dictionary: PronunciationDict, symbols: str, mode: str, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Tuple[OrderedSet[Word], int]:
+def remove_symbols(dictionary: PronunciationDict, symbols: str, mode: str, ratio: float, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Tuple[OrderedSet[Word], int]:
   process_method = partial(
     process_get_word,
     symbols=symbols,
@@ -111,17 +109,19 @@ def remove_symbols(dictionary: PronunciationDict, symbols: str, mode: str, n_job
     new_word = new_words_to_words[word]
     changed_word = new_word is not None
     if changed_word:
-      pronunciations = dictionary.pop(word)
+      popped_pronunciations = dictionary.pop(word)
       if new_word in dictionary:
-        dictionary[new_word].update(pronunciations)
+        existing_pronunciations = dictionary[word]
+        merge_pronunciations(existing_pronunciations, popped_pronunciations, ratio)
       else:
         if new_word == "":
           removed_words.add(word)
         else:
-          dictionary[new_word] = pronunciations
+          dictionary[new_word] = popped_pronunciations
       changed_counter += 1
 
   return removed_words, changed_counter
+
 
 
 def process_get_word(word: Word, symbols: str, mode: Literal["all", "start", "end", "both"]) -> Tuple[Word, Optional[Word]]:

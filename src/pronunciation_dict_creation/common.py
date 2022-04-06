@@ -1,3 +1,4 @@
+from pronunciation_dict_parser import convert_weights_to_probabilities
 from collections import OrderedDict
 from logging import getLogger
 from pathlib import Path
@@ -144,12 +145,43 @@ def try_save_dict(pronunciation_dict: PronunciationDict, path: Path, word_pronun
   return True
 
 
-def try_load_dict(path: Path) -> Optional[PronunciationDict]:
-  options = LineParsingOptions(PROG_CONS_COMMENTS, PROG_CONS_WORD_NRS,
-                               PROG_CONS_PRON_COMMENTS, PROG_CONS_WEIGHTS)
-  mp_options = MultiprocessingOptions(DEFAULT_N_JOBS, DEFAULT_MAXTASKSPERCHILD, DEFAULT_CHUNKSIZE)
+def try_load_dict(path: Path, encoding: str = PROG_ENCODING, consider_comments: bool = PROG_CONS_COMMENTS, consider_word_nrs: bool = PROG_CONS_WORD_NRS, consider_pronunciation_comments: bool = PROG_CONS_PRON_COMMENTS, consider_weights: bool = PROG_CONS_WEIGHTS, n_jobs: int = DEFAULT_N_JOBS, maxtasksperchild: Optional[int] = DEFAULT_MAXTASKSPERCHILD, chunksize: int = DEFAULT_CHUNKSIZE) -> Optional[PronunciationDict]:
+  options = LineParsingOptions(consider_comments, consider_word_nrs,
+                               consider_pronunciation_comments, consider_weights)
+  mp_options = MultiprocessingOptions(n_jobs, maxtasksperchild, chunksize)
   try:
-    result = get_dict_from_file(path, PROG_ENCODING, options, mp_options)
+    result = get_dict_from_file(path, encoding, options, mp_options)
   except Exception as ex:
     return None
   return result
+
+
+def merge_pronunciations(pronunciations1: Pronunciations, pronunciations2: Pronunciations, weights_ratio: float) -> None:
+  assert pronunciations1 != pronunciations2
+  assert 0 <= weights_ratio <= 1
+  convert_weights_to_probabilities(pronunciations1)
+  convert_weights_to_probabilities(pronunciations2)
+  if weights_ratio != 1:
+    for pronunciation1, weight1 in pronunciations1.items():
+      if pronunciation1 not in pronunciations2:
+        new_weight = weight1 * weights_ratio
+        pronunciations1[pronunciation1] = new_weight
+
+  for pronunciation2, weight2 in pronunciations2.items():
+    new_weight2 = weight2 * (1 - weights_ratio)
+    if pronunciation2 in pronunciations1:
+      weight1 = pronunciations1[pronunciation2]
+      new_weight1 = weight1 * weights_ratio
+      new_weight = new_weight1 + new_weight2
+    else:
+      new_weight = new_weight2
+    pronunciations1[pronunciation2] = new_weight
+
+
+# def merge_equal_weight_sum(pronunciations1: Pronunciations, pronunciations2: Pronunciations, ratio: float) -> None:
+#   assert sum(pronunciations1.values()) * ratio == sum(pronunciations2.values()) * (1 - ratio)
+#   for pronunciation2, weight2 in pronunciations2.items():
+#     if pronunciation2 in pronunciations1:
+#       pronunciations1[pronunciation2] += weight2
+#     else:
+#       pronunciations1[pronunciations2] = weight2
