@@ -8,7 +8,7 @@ from typing import Literal
 from pronunciation_dict_parser import PronunciationDict, Symbol
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import parse_existing_file, parse_non_empty, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, save_dict
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, PROG_ENCODING, add_chunksize_argument, try_save_dict
 from pronunciation_dict_parser import parse_dictionary_from_txt
 
 from tempfile import gettempdir
@@ -22,7 +22,7 @@ from typing import Optional, Set, Tuple
 from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, save_dict
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, try_save_dict
 from pronunciation_dict_parser import parse_dictionary_from_txt
 
 
@@ -67,8 +67,9 @@ def remove_symbols_from_words(dictionaries: OrderedSet[Path], symbols: OrderedSe
 
     logger.info(f"Changed pronunciations of {changed_counter} word(s).")
 
-    success = save_dict(dictionary_instance, dictionary_path)
+    success = try_save_dict(dictionary_instance, dictionary_path)
     if not success:
+      logger.error("Dictionary couldn't be written.")
       return False
 
     logger.info(f"Written dictionary to: {dictionary_path.absolute()}")

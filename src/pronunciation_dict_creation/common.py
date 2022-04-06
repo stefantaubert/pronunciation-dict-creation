@@ -1,21 +1,21 @@
 from collections import OrderedDict
 from logging import getLogger
 from pathlib import Path
-from pronunciation_dict_parser.core.parser import PronunciationDict
-from pronunciation_dict_parser.core.types import Symbol
+from pronunciation_dict_parser import PronunciationDict
+from pronunciation_dict_parser import Symbol
 import argparse
 from argparse import ArgumentParser
 from multiprocessing import cpu_count
 from dataclasses import dataclass
 from typing import List, Literal, Optional, Set, Tuple
-from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations
+from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, get_dict_from_file, LineParsingOptions, MultiprocessingOptions
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_codec, parse_positive_integer
 
 
 DEFAULT_ENCODING = "UTF-8"
 DEFAULT_N_JOBS = cpu_count()
-DEFAULT_N_FILE_CHUNKSIZE = 1000
+DEFAULT_CHUNKSIZE = 1000
 DEFAULT_MAXTASKSPERCHILD = None
 
 
@@ -23,8 +23,13 @@ PROG_SYMBOL_SEP = " "
 PROG_WORD_SEP = "  "
 PROG_INCLUDE_COUNTER = False
 PROG_EMPTY_SYMBOL = ""
+PROG_INCL_WEIGHTS = True
 PROG_ONLY_FIRST = False
 PROG_ENCODING = "UTF-8"
+PROG_CONS_COMMENTS = False
+PROG_CONS_WORD_NRS = False
+PROG_CONS_PRON_COMMENTS = False
+PROG_CONS_WEIGHTS = True
 
 
 @dataclass()
@@ -91,7 +96,7 @@ def add_n_jobs_argument(parser: ArgumentParser) -> None:
                       choices=range(1, cpu_count() + 1), default=DEFAULT_N_JOBS, help="amount of parallel cpu jobs")
 
 
-def add_chunksize_argument(parser: ArgumentParser, target: str = "words", default: int = DEFAULT_N_FILE_CHUNKSIZE) -> None:
+def add_chunksize_argument(parser: ArgumentParser, target: str = "words", default: int = DEFAULT_CHUNKSIZE) -> None:
   parser.add_argument("-c", "--chunksize", type=parse_positive_integer, metavar="NUMBER",
                       help=f"amount of {target} to chunk into one job", default=default)
 
@@ -108,30 +113,43 @@ class ConvertToOrderedSetAction(argparse._StoreAction):
     super().__call__(parser, namespace, values, option_string)
 
 
-def to_text(pronunciation_dict: PronunciationDict, word_pronunciation_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL) -> None:
-  dict_content = ""
+def to_text(pronunciation_dict: PronunciationDict, parts_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL, include_weights: bool = PROG_INCL_WEIGHTS) -> str:
+  lines = []
   for word, pronunciations in pronunciation_dict.items():
-    for counter, pronunciation in enumerate(pronunciations):
+    for counter, (pronunciation, weight) in enumerate(pronunciations.items(), start=1):
       if len(pronunciation) == 0 and len(empty_symbol) > 0:
         pronunciation = tuple(empty_symbol)
-      counter_str = f"({counter})" if include_counter and counter > 0 else ""
-      pron = symbol_sep.join(pronunciation)
-      line = f"{word}{counter_str}{word_pronunciation_sep}{pron}\n"
-      dict_content += line
+      counter_str = f"({counter})" if include_counter and counter > 1 else ""
+      word_part = f"{word}{counter_str}{parts_sep}"
+      weights_part = ""
+      if include_weights:
+        weights_part = f"{weight}{parts_sep}"
+      pron_part = symbol_sep.join(pronunciation)
+      line = f"{word_part}{weights_part}{pron_part}\n"
+      lines.append(line)
       if only_first_pronunciation:
         break
-  dict_content = dict_content.rstrip("\n")
+  dict_content = "\n".join(lines)
   return dict_content
 
 
-def save_dict(pronunciation_dict: PronunciationDict, path: Path, word_pronunciation_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL, encoding: str = PROG_ENCODING) -> bool:
+def try_save_dict(pronunciation_dict: PronunciationDict, path: Path, word_pronunciation_sep: Symbol = PROG_WORD_SEP, symbol_sep: Symbol = PROG_SYMBOL_SEP, include_counter: bool = PROG_INCLUDE_COUNTER, only_first_pronunciation: bool = PROG_ONLY_FIRST, empty_symbol: Symbol = PROG_EMPTY_SYMBOL, encoding: str = PROG_ENCODING, include_weights: bool = PROG_INCL_WEIGHTS) -> bool:
   dict_content = to_text(pronunciation_dict, word_pronunciation_sep, symbol_sep,
-                         include_counter, only_first_pronunciation, empty_symbol)
+                         include_counter, only_first_pronunciation, empty_symbol, include_weights)
   path.parent.mkdir(parents=True, exist_ok=True)
   try:
     path.write_text(dict_content, encoding)
   except Exception as ex:
-    logger = getLogger(__name__)
-    logger.error("Dictionary couldn't be written.")
     return False
   return True
+
+
+def try_load_dict(path: Path) -> Optional[PronunciationDict]:
+  options = LineParsingOptions(PROG_CONS_COMMENTS, PROG_CONS_WORD_NRS,
+                               PROG_CONS_PRON_COMMENTS, PROG_CONS_WEIGHTS)
+  mp_options = MultiprocessingOptions(DEFAULT_N_JOBS, DEFAULT_MAXTASKSPERCHILD, DEFAULT_CHUNKSIZE)
+  try:
+    result = get_dict_from_file(path, PROG_ENCODING, options, mp_options)
+  except Exception as ex:
+    return None
+  return result

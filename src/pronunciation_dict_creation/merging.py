@@ -5,7 +5,7 @@ from typing import Literal
 from pronunciation_dict_parser import PronunciationDict
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import parse_existing_file, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, PROG_ENCODING, save_dict
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, PROG_ENCODING, try_save_dict
 from pronunciation_dict_parser import parse_dictionary_from_txt
 
 
@@ -48,8 +48,9 @@ def merge_dictionary_files(dictionaries: OrderedSet[Path], output_dictionary: Pa
     else:
       assert False
 
-  success = save_dict(resulting_dictionary, output_dictionary)
+  success = try_save_dict(resulting_dictionary, output_dictionary)
   if not success:
+    logger.error("Dictionary couldn't be written.")
     return False
 
   logger.info(f"Written dictionary to: {output_dictionary.absolute()}")

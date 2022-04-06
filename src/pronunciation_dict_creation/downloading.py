@@ -2,7 +2,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from logging import getLogger
 
-from pronunciation_dict_parser.core.types import PronunciationDict
+from pronunciation_dict_parser import PronunciationDict
 from argparse import ArgumentParser
 from logging import getLogger
 from pathlib import Path
@@ -11,10 +11,12 @@ from tempfile import gettempdir
 
 from pathlib import Path
 
-from pronunciation_dict_parser.core.parser import parse_url
+from pronunciation_dict_parser import get_dict_from_url, MultiprocessingOptions, LineParsingOptions
 from pronunciation_dict_creation.argparse_helper import parse_path
 
-from pronunciation_dict_creation.common import PROG_ENCODING, save_dict, to_text
+from pronunciation_dict_creation.common import PROG_ENCODING, try_save_dict, to_text
+
+# https://github.com/MontrealCorpusTools/mfa-models/tree/main/dictionary/english
 
 
 @dataclass()
@@ -22,26 +24,28 @@ class PublicDict():
   url: str
   encoding: str
   description: str
-
-# cmu old: "http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b"
+  options: LineParsingOptions
 
 
 public_dicts = OrderedDict((
   ("cmu", PublicDict(
     "https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict",
-    "ISO-8859-1", "CMU (ARPA)")),
+    "ISO-8859-1", "CMU (ARPA)", LineParsingOptions(False, True, True, False))),
+  ("cmu-alt", PublicDict(
+    "http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b",
+    "ISO-8859-1", "CMU (ARPA)", LineParsingOptions(True, True, False, False))),
   ("librispeech", PublicDict(
     "https://www.openslr.org/resources/11/librispeech-lexicon.txt",
-    "UTF-8", "LibriSpeech (ARPA)")),
-  ("mfa", PublicDict(
-    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english.dict", "UTF-8", "MFA (ARPA)")),
-  ("mfa-en-uk", PublicDict(
-    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english_uk_ipa.dict", "UTF-8", "MFA en-UK (IPA)")),
-  ("mfa-en-us", PublicDict(
-    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english_us_ipa.dict", "UTF-8", "MFA en-US (IPA)")),
+    "UTF-8", "LibriSpeech (ARPA)", LineParsingOptions(False, False, False, False))),
+  ("mfa-arpa", PublicDict(
+    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english.dict", "UTF-8", "MFA V1 (ARPA)", LineParsingOptions(False, False, False, False))),
+  ("mfa-arpa-v2", PublicDict(
+    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english/us_arpa/v2.0.0/english_us_arpa.dict", "UTF-8", "MFA V2 (ARPA)", LineParsingOptions(False, False, False, False))),
+  ("mfa-ipa-v2", PublicDict(
+    "https://raw.githubusercontent.com/MontrealCorpusTools/mfa-models/main/dictionary/english/mfa/v2.0.0/english_mfa.dict", "UTF-8", "MFA V2 (IPA)", LineParsingOptions(False, False, False, False))),
   ("prosodylab", PublicDict(
     "https://raw.githubusercontent.com/prosodylab/Prosodylab-Aligner/master/eng.dict",
-    "UTF-8", "Prosodylab (ARPA)")),
+    "UTF-8", "Prosodylab (ARPA)", LineParsingOptions(False, False, False, False))),
 ))
 
 
@@ -59,8 +63,9 @@ def app_download(dictionary: str, path: Path) -> bool:
   logger = getLogger(__name__)
 
   pronunciation_dict = download_dict(dictionary)
-  success = save_dict(pronunciation_dict, path)
+  success = try_save_dict(pronunciation_dict, path)
   if not success:
+    logger.error("Dictionary couldn't be written.")
     return False
 
   logger.info(f"Written dictionary to: {path.absolute()}")
@@ -75,5 +80,5 @@ def download_dict(dictionary: str) -> PronunciationDict:
 
   logger.info(f"Downloading {dictionary_info.description}...")
 
-  pronunciation_dict = parse_url(dictionary_info.url, dictionary_info.encoding)
+  pronunciation_dict = get_dict_from_url(dictionary_info.url, dictionary_info.encoding)
   return pronunciation_dict

@@ -9,8 +9,8 @@ from typing import Optional, Set, Tuple
 from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, save_dict
-from pronunciation_dict_parser import parse_dictionary_from_txt
+from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, try_load_dict, try_save_dict
+from pronunciation_dict_parser import get_dict_from_file
 from pronunciation_dict_creation.word2pronunciation import get_pronunciation_from_word
 
 
@@ -52,10 +52,8 @@ def get_pronunciations_files(vocabulary: Path, encoding: str, dictionary: Path, 
     logger.error("Vocabulary couldn't be read.")
     return False
 
-  try:
-    reference_dictionary_instance = parse_dictionary_from_txt(
-      reference_dictionary, PROG_ENCODING)
-  except Exception as ex:
+  reference_dictionary_instance = try_load_dict(reference_dictionary)
+  if reference_dictionary_instance is None:
     logger.error("Reference dictionary couldn't be read.")
     return False
 
@@ -66,8 +64,9 @@ def get_pronunciations_files(vocabulary: Path, encoding: str, dictionary: Path, 
   dictionary_instance, unresolved_words = get_pronunciations(
     params, reference_dictionary_instance, ignore_case)
 
-  success = save_dict(dictionary_instance, dictionary)
+  success = try_save_dict(dictionary_instance, dictionary)
   if not success:
+    logger.error("Dictionary couldn't be written.")
     return False
 
   logger.info(f"Written dictionary to: {dictionary.absolute()}")
