@@ -1,17 +1,16 @@
-from pronunciation_dict_parser import get_first_pronunciation
+from collections import OrderedDict
 from tempfile import gettempdir
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from logging import getLogger
 from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
-from typing import Optional, Set, Tuple
-from pronunciation_dict_parser import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation
+from typing import Dict, List, Optional, Set, Tuple
+from pronunciation_dictionary import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
+from sentence2pronunciation import get_pronunciations_from_word, Options
 from ordered_set import OrderedSet
-from pronunciation_dict_creation.argparse_helper import get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
-from pronunciation_dict_creation.common import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, DefaultParameters, PROG_ENCODING, add_chunksize_argument, add_encoding_argument, add_maxtaskperchild_argument, add_n_jobs_argument, get_dictionary, try_load_dict, try_save_dict
-from pronunciation_dict_creation.word2pronunciation import get_pronunciation_from_word
+from pronunciation_dict_creation.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
 
 
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):
@@ -34,84 +33,109 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
                       help="split words on hyphen symbol before lookup")
   parser.add_argument("--oov-out", metavar="PATH", type=get_optional(parse_path),
                       help="write out-of-vocabulary (OOV) words (i.e., words that did not exist in the reference dictionary) to this file (encoding will be the same as the one from the vocabulary file)", default=default_oov_out)
-  add_encoding_argument(parser, "--encoding", "encoding of vocabulary")
+  add_encoding_argument(parser, "--vocabulary-encoding", "encoding of vocabulary")
+  add_io_group(parser)
   add_n_jobs_argument(parser)
   add_chunksize_argument(parser)
   add_maxtaskperchild_argument(parser)
   return get_pronunciations_files
 
 
-def get_pronunciations_files(vocabulary: Path, encoding: str, dictionary: Path, reference_dictionary: Path, ignore_case: bool, trim: OrderedSet[Symbol], consider_annotations: bool, split_on_hyphen: bool, oov_out: Optional[Path], n_jobs, maxtasksperchild: Optional[int], chunksize: int) -> bool:
-  assert vocabulary.is_file()
-  assert reference_dictionary.is_file()
+def get_pronunciations_files(ns: Namespace) -> bool:
+  assert ns.vocabulary.is_file()
+  assert ns.reference_dictionary.is_file()
   logger = getLogger(__name__)
 
   try:
-    vocabulary_content = vocabulary.read_text(encoding)
+    vocabulary_content = ns.vocabulary.read_text(ns.vocabulary_encoding)
   except Exception as ex:
     logger.error("Vocabulary couldn't be read.")
     return False
 
-  reference_dictionary_instance = try_load_dict(reference_dictionary)
-  if reference_dictionary_instance is None:
+  lp_options = DeserializationOptions(
+      ns.consider_comments, ns.consider_numbers, ns.consider_pronunciation_comments, ns.consider_weights)
+  mp_options = MultiprocessingOptions(ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
+
+  s_options = SerializationOptions(ns.parts_sep, ns.consider_numbers, ns.consider_weights)
+
+  try:
+    reference_dictionary_instance = get_dict_from_file(
+      ns.reference_dictionary, ns.encoding, lp_options, mp_options)
+  except Exception as ex:
     logger.error("Reference dictionary couldn't be read.")
     return False
 
   vocabulary_words = OrderedSet(vocabulary_content.splitlines())
-  params = DefaultParameters(vocabulary_words, consider_annotations, "/",
-                             split_on_hyphen, trim, n_jobs, maxtasksperchild, chunksize)
 
-  dictionary_instance, unresolved_words = get_pronunciations(
-    params, reference_dictionary_instance, ignore_case)
+  options = Options(ns.trim, ns.split_on_hyphen, ns.consider_annotations,
+                    "/", True, True)
 
-  success = try_save_dict(dictionary_instance, dictionary)
-  if not success:
+  dictionary_instance, unresolved_words = get_pronunciations(vocabulary_words,
+                                                             reference_dictionary_instance, options, ns.ignore_case, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
+
+  try:
+    save_dict_to_file(dictionary_instance, ns.dictionary, ns.encoding, s_options)
+  except Exception as ex:
     logger.error("Dictionary couldn't be written.")
     return False
 
-  logger.info(f"Written dictionary to: {dictionary.absolute()}")
+  logger.info(f"Written dictionary to: {ns.dictionary.absolute()}")
 
   if len(unresolved_words) > 0:
     logger.warning("Not all words were contained in the reference dictionary")
-    if oov_out is not None:
+    if ns.oov_out is not None:
       unresolved_out_content = "\n".join(unresolved_words)
-      oov_out.parent.mkdir(parents=True, exist_ok=True)
+      ns.oov_out.parent.mkdir(parents=True, exist_ok=True)
       try:
-        oov_out.write_text(unresolved_out_content, "UTF-8")
+        ns.oov_out.write_text(unresolved_out_content, "UTF-8")
       except Exception as ex:
         logger.error("Unresolved output couldn't be created!")
         return False
-      logger.info(f"Written unresolved to: {oov_out.absolute()}")
+      logger.info(f"Written unresolved to: {ns.oov_out.absolute()}")
   else:
     logger.info("Complete vocabulary is contained in output!")
 
   return True
 
 
-def get_pronunciations(default_params: DefaultParameters, lookup_dict: PronunciationDict, lookup_ignore_case: bool) -> Tuple[PronunciationDict, OrderedSet[Word]]:
+def get_pronunciations(vocabulary: OrderedSet[Word], lookup_dict: PronunciationDict, options: Options, lookup_ignore_case: bool, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int) -> Tuple[PronunciationDict, OrderedSet[Word]]:
   lookup_method = partial(
     process_get_pronunciation,
+    options=options,
     ignore_case=lookup_ignore_case,
-    trim_symbols=default_params.trim_symbols,
-    split_on_hyphen=default_params.split_on_hyphen,
-    consider_annotations=default_params.consider_annotations,
-    annotation_split_symbol=default_params.annotation_split_symbol,
   )
 
   if lookup_ignore_case:
-    lookup_dict = dict_words_to_lower(lookup_dict)
+    mp_options = MultiprocessingOptions(n_jobs, maxtasksperchild, chunksize)
+    change_word_casing(lookup_dict, "lower", 0.5, mp_options)
 
   with Pool(
-    processes=default_params.n_jobs,
+    processes=n_jobs,
     initializer=__init_pool_prepare_cache_mp,
-    initargs=(default_params.vocabulary, lookup_dict),
-    maxtasksperchild=default_params.maxtasksperchild,
+    initargs=(vocabulary, lookup_dict),
+    maxtasksperchild=maxtasksperchild,
   ) as pool:
-    entries = range(len(default_params.vocabulary))
-    iterator = pool.imap(lookup_method, entries, default_params.chunksize)
-    pronunciations_to_i = list(tqdm(iterator, total=len(entries), unit="words"))
+    entries = range(len(vocabulary))
+    iterator = pool.imap(lookup_method, entries, chunksize)
+    pronunciations_to_i = dict(tqdm(iterator, total=len(entries), unit="words"))
 
-  return get_dictionary(pronunciations_to_i, default_params.vocabulary)
+  return get_dictionary(pronunciations_to_i, vocabulary)
+
+
+def get_dictionary(pronunciations_to_i: Dict[int, Pronunciations], vocabulary: OrderedSet[Word]) -> Tuple[PronunciationDict, OrderedSet[Word]]:
+  resulting_dict = OrderedDict()
+  unresolved_words = OrderedSet()
+
+  for i, word in enumerate(vocabulary):
+    pronunciations = pronunciations_to_i[i]
+
+    if len(pronunciations) == 0:
+      unresolved_words.add(word)
+      continue
+    assert word not in resulting_dict
+    resulting_dict[word] = pronunciations
+
+  return resulting_dict, unresolved_words
 
 
 process_unique_words: OrderedSet[Word] = None
@@ -125,7 +149,7 @@ def __init_pool_prepare_cache_mp(words: OrderedSet[Word], lookup_dict: Pronuncia
   process_lookup_dict = lookup_dict
 
 
-def process_get_pronunciation(word_i: int, ignore_case: bool, trim_symbols: Set[Symbol], split_on_hyphen: bool, consider_annotations: bool, annotation_split_symbol: Optional[Symbol]) -> Tuple[int, Optional[Pronunciations]]:
+def process_get_pronunciation(word_i: int, ignore_case: bool, options: Options) -> Tuple[int, Pronunciations]:
   global process_unique_words
   global process_lookup_dict
   assert 0 <= word_i < len(process_unique_words)
@@ -133,43 +157,21 @@ def process_get_pronunciation(word_i: int, ignore_case: bool, trim_symbols: Set[
 
   # TODO support all entries; also create all combinations with hyphen then
   lookup_method = partial(
-    lookup_first_entry_in_dict,
+    lookup_in_dict,
     ignore_case=ignore_case,
   )
 
-  pronunciation = get_pronunciation_from_word(
-    word=tuple(word),
-    trim_symbols=trim_symbols,
-    split_on_hyphen=split_on_hyphen,
-    get_pronunciation=lookup_method,
-    consider_annotation=consider_annotations,
-    annotation_split_symbol=annotation_split_symbol,
-  )
+  pronunciations = get_pronunciations_from_word(word, lookup_method, options)
 
-  if None in pronunciation:
-    return word_i, None
-  return word_i, OrderedSet((pronunciation,))
+  return word_i, pronunciations
 
 
-def lookup_first_entry_in_dict(word: Pronunciation, ignore_case: bool) -> Pronunciation:
+def lookup_in_dict(word: Word, ignore_case: bool) -> Pronunciations:
   global process_lookup_dict
-  word_str = "".join(word)
   if ignore_case:
-    word_str = word_str.lower()
-  result = None
-  if word_str in process_lookup_dict:
-    result = get_first_pronunciation(word_str, process_lookup_dict)
-  if result is None:
-    return (None,)
-  return result
-
-
-def dict_words_to_lower(lookup_dict: PronunciationDict) -> PronunciationDict:
-  result = PronunciationDict()
-  for word, pronunciations in lookup_dict.items():
     word = word.lower()
-    if word in result:
-      result[word].update(pronunciations)
-    else:
-      result[word] = pronunciations
+  if word in process_lookup_dict:
+    result = process_lookup_dict[word]
+  else:
+    result = OrderedDict()
   return result

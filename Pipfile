@@ -14,10 +14,9 @@ rope = "*"
 pytest = "*"
 
 [packages]
-pronunciation_dict_parser = {editable = true, path = "./../pronunciation_dict_parser"}
-g2p_en = {editable = true, path = "./../g2p"}
-epitran = "*"
-dragonmapper = "*"
+iterable-serialization = {editable = true, path = "./../iterable-serialization"}
+sentence2pronunciation = {editable = true, path = "./../sentence2pronunciation"}
+pronunciation-dictionary = {editable = true, path = "./../pronunciation-dictionary"}
 ordered-set = "*"
 
 [requires]

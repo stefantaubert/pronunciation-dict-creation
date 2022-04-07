@@ -3,6 +3,7 @@ import codecs
 from argparse import ArgumentParser, ArgumentTypeError
 from collections import OrderedDict
 from functools import partial
+from multiprocessing import cpu_count
 from pathlib import Path
 from typing import Callable, List, Optional, TypeVar
 
@@ -10,12 +11,74 @@ from ordered_set import OrderedSet
 
 T = TypeVar("T")
 
+DEFAULT_ENCODING = "UTF-8"
+DEFAULT_N_JOBS = cpu_count()
+DEFAULT_CHUNKSIZE = 1000
+DEFAULT_MAXTASKSPERCHILD = None
+
+
+PROG_SYMBOL_SEP = " "
+PROG_WORD_SEP = "  "
+PROG_INCLUDE_COUNTER = False
+PROG_EMPTY_SYMBOL = ""
+PROG_INCL_WEIGHTS = True
+PROG_ONLY_FIRST = False
+PROG_ENCODING = "UTF-8"
+PROG_CONS_COMMENTS = False
+PROG_CONS_WORD_NRS = False
+PROG_CONS_PRON_COMMENTS = False
+PROG_CONS_WEIGHTS = True
+
+
+DEFAULT_PUNCTUATION = list(OrderedSet(sorted((
+  "!", "\"", "#", "$", "%", "&", "'", "(", ")", "*", "+", ",", "-", ".", "/", ":", ";", "<", "=", ">", "?", "@", "[", "\\", "]", "{", "}", "~", "`",
+  "、", "。", "？", "！", "：", "；", "।", "¿", "¡", "【", "】", "，", "…", "‥", "「", "」", "『", "』", "〝", "〟", "″", "⟨", "⟩", "♪", "・", "‹", "›", "«", "»", "～", "′", "“", "”"
+))))
+
 
 class ConvertToOrderedSetAction(argparse._StoreAction):
   def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Optional[List], option_string: Optional[str] = None):
     if values is not None:
       values = OrderedSet(values)
     super().__call__(parser, namespace, values, option_string)
+
+
+
+def add_io_group(parser: ArgumentParser) -> None:
+  """ use this for modification of dictionary content """
+  group = parser.add_argument_group('I/O arguments used for serialization/deserialization')
+  add_encoding_argument(group, "--encoding",
+                        "encoding used for serialization/deserialization")
+  group.add_argument("-cc", "--consider-comments", action="store_true",
+                     help="consider line comments while deserialization")
+  group.add_argument("-cn", "--consider-numbers", action="store_true",
+                     help="consider word numbers used to separate different pronunciations while serialization/deserialization")
+  group.add_argument("-cp", "--consider-pronunciation-comments", action="store_true",
+                     help="consider comments in pronunciations while deserialization")
+  group.add_argument("-cw", "--consider-weights", action="store_true",
+                     help="consider weights while serialization/deserialization")
+  group.add_argument("-ps", "--parts-sep", type=parse_non_empty,
+                     help="symbol to separate word/weight/pronunciation in a line while serialization", choices=["TAB", "SPACE", "DOUBLE-SPACE"], default="DOUBLE-SPACE")
+
+
+def add_encoding_argument(parser: ArgumentParser, variable: str, help_str: str) -> None:
+  parser.add_argument(variable, type=parse_codec, metavar='CODEC',
+                      help=help_str + "; see all available codecs at https://docs.python.org/3.8/library/codecs.html#standard-encodings", default=DEFAULT_ENCODING)
+
+
+def add_n_jobs_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("-j", "--n-jobs", metavar='N', type=int,
+                      choices=range(1, cpu_count() + 1), default=DEFAULT_N_JOBS, help="amount of parallel cpu jobs")
+
+
+def add_chunksize_argument(parser: ArgumentParser, target: str = "words", default: int = DEFAULT_CHUNKSIZE) -> None:
+  parser.add_argument("-c", "--chunksize", type=parse_positive_integer, metavar="NUMBER",
+                      help=f"amount of {target} to chunk into one job", default=default)
+
+
+def add_maxtaskperchild_argument(parser: ArgumentParser) -> None:
+  parser.add_argument("-m", "--maxtasksperchild", type=get_optional(parse_positive_integer), metavar="NUMBER",
+                      help="amount of tasks per child", default=DEFAULT_MAXTASKSPERCHILD)
 
 
 def parse_codec(value: str) -> str:

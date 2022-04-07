@@ -1,6 +1,6 @@
 from typing import (Callable, Generator, List, Optional,
                     Set, Tuple)
-from pronunciation_dict_parser import Pronunciation, Symbol
+from pronunciation_dictionary import Pronunciation, Symbol
 
 HYPHEN = "-"
 
