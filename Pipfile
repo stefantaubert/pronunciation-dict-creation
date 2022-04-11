@@ -16,7 +16,7 @@ cx-freeze = "*"
 
 [packages]
 iterable-serialization = {editable = true, path = "./../iterable-serialization"}
-sentence2pronunciation = {editable = true, path = "./../sentence2pronunciation"}
+word-to-pronunciation = {editable = true, path = "./../word-to-pronunciation"}
 pronunciation-dictionary = {editable = true, path = "./../pronunciation-dictionary"}
 ordered-set = "*"
 

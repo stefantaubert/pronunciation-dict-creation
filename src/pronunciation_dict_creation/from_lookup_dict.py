@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from dataclasses import dataclass
 from tempfile import gettempdir
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
@@ -8,7 +9,7 @@ from functools import partial
 from multiprocessing.pool import Pool
 from typing import Dict, List, Optional, Set, Tuple
 from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
-from sentence2pronunciation import get_pronunciations_from_word, Options
+from word_to_pronunciation import get_pronunciations_from_word, Options, get_cached_lookup
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
 
@@ -66,9 +67,9 @@ def get_pronunciations_files(ns: Namespace) -> bool:
     return False
 
   vocabulary_words = OrderedSet(vocabulary_content.splitlines())
-
-  options = Options(ns.trim, ns.split_on_hyphen, ns.consider_annotations,
-                    "/", True, True)
+  trim_symbols = ''.join(ns.trim)
+  options = Options(trim_symbols, ns.split_on_hyphen, ns.consider_annotations,
+                    "/", True, True, 1.0)
 
   dictionary_instance, unresolved_words = get_pronunciations(vocabulary_words,
                                                              reference_dictionary_instance, options, ns.ignore_case, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
@@ -108,7 +109,7 @@ def get_pronunciations(vocabulary: OrderedSet[Word], lookup_dict: PronunciationD
   if lookup_ignore_case:
     mp_options = MultiprocessingOptions(n_jobs, maxtasksperchild, chunksize)
     change_word_casing(lookup_dict, "lower", 0.5, mp_options)
-
+  n_jobs = 1
   with Pool(
     processes=n_jobs,
     initializer=__init_pool_prepare_cache_mp,
