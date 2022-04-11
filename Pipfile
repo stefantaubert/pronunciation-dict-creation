@@ -12,6 +12,7 @@ isort = "*"
 pipenv-setup = "*"
 rope = "*"
 pytest = "*"
+cx-freeze = "*"
 
 [packages]
 iterable-serialization = {editable = true, path = "./../iterable-serialization"}

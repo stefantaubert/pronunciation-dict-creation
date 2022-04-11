@@ -19,24 +19,12 @@ def formatter(prog):
 
 
 def _init_parser():
-  main_parser = ArgumentParser(
-    formatter_class=formatter,
-    description="This program provides methods to create pronunciation dictionaries.",
-  )
+  main_parser = ArgumentParser(formatter_class=formatter)
   main_parser.add_argument('-v', '--version', action='version', version='%(prog)s ' + __version__)
-  subparsers = main_parser.add_subparsers(help="description")
-
-  methods: Dict[str, Tuple[Parsers, str]] = (
-    ("create-from-dict", "add vocabulary with a dictionary",
-     get_app_try_add_vocabulary_from_pronunciations_parser),
-  )
-
-  for command, description, method in methods:
-    method_parser = subparsers.add_parser(
-      command, help=description, formatter_class=formatter)
-    method_parser.set_defaults(**{
-      INVOKE_HANDLER_VAR: method(method_parser),
-    })
+  method = get_app_try_add_vocabulary_from_pronunciations_parser(main_parser)
+  main_parser.set_defaults(**{
+      INVOKE_HANDLER_VAR: method,
+  })
 
   return main_parser
 

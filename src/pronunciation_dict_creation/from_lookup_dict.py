@@ -7,7 +7,7 @@ from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
 from typing import Dict, List, Optional, Set, Tuple
-from pronunciation_dictionary import PronunciationDict, Symbol, Word, Pronunciations, Pronunciation, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
+from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
 from sentence2pronunciation import get_pronunciations_from_word, Options
 from ordered_set import OrderedSet
 from pronunciation_dict_creation.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
@@ -19,10 +19,10 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
   # todo support multiple files
   parser.add_argument("vocabulary", metavar='vocabulary', type=parse_existing_file,
                       help="file containing the vocabulary (words separated by line)")
-  parser.add_argument("dictionary", metavar='dictionary', type=parse_path,
-                      help="file containing the output dictionary")
   parser.add_argument("reference_dictionary", metavar='reference-dictionary', type=parse_existing_file,
                       help="file containing the reference pronunciation dictionary")
+  parser.add_argument("dictionary", metavar='dictionary', type=parse_path,
+                      help="path to output created dictionary")
   parser.add_argument("--ignore-case", action="store_true",
                       help="ignore case while looking up in reference-dictionary")
   parser.add_argument("--trim", type=parse_non_empty_or_whitespace, metavar='SYMBOL', nargs='*',
