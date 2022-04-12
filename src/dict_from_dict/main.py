@@ -15,7 +15,7 @@ from dict_from_dict.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PU
 
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):
   default_oov_out = Path(gettempdir()) / "oov.txt"
-  parser.description = "Transcribe vocabulary with a given pronunciation dictionary and add it to an existing pronunciation dictionary or create one."
+  parser.description = "Transcribe vocabulary with a given pronunciation dictionary."
   # todo support multiple files
   parser.add_argument("vocabulary", metavar='vocabulary', type=parse_existing_file,
                       help="file containing the vocabulary (words separated by line)")
@@ -33,9 +33,10 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
                       help="write out-of-vocabulary (OOV) words (i.e., words that did not exist in the reference dictionary) to this file (encoding will be the same as the one from the vocabulary file)", default=default_oov_out)
   add_encoding_argument(parser, "--vocabulary-encoding", "encoding of vocabulary")
   add_io_group(parser)
-  add_n_jobs_argument(parser)
-  add_chunksize_argument(parser)
-  add_maxtaskperchild_argument(parser)
+  mp_group = parser.add_argument_group("multiprocessing arguments")
+  add_n_jobs_argument(mp_group)
+  add_chunksize_argument(mp_group)
+  add_maxtaskperchild_argument(mp_group)
   return get_pronunciations_files
 
 
