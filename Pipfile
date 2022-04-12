@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pronunciation-dict-creation = {editable = true, path = "."}
+dict-from-dict = {editable = true, path = "."}
 autopep8 = "*"
 pylint = "*"
 pycodestyle = "*"

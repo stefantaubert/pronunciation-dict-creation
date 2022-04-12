@@ -6,7 +6,7 @@ from pathlib import Path
 from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Tuple
 from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
 from word_to_pronunciation import get_pronunciations_from_word, Options
 from ordered_set import OrderedSet
@@ -27,8 +27,6 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
                       help="ignore case while looking up in reference-dictionary")
   parser.add_argument("--trim", type=parse_non_empty_or_whitespace, metavar='SYMBOL', nargs='*',
                       help="trim these symbols from the start and end of a word before looking it up in the reference pronunciation dictionary", action=ConvertToOrderedSetAction, default=DEFAULT_PUNCTUATION)
-  parser.add_argument("--consider-annotations", action="store_true",
-                      help="consider /.../-styled annotations")
   parser.add_argument("--split-on-hyphen", action="store_true",
                       help="split words on hyphen symbol before lookup")
   parser.add_argument("--oov-out", metavar="PATH", type=get_optional(parse_path),
@@ -67,8 +65,7 @@ def get_pronunciations_files(ns: Namespace) -> bool:
 
   vocabulary_words = OrderedSet(vocabulary_content.splitlines())
   trim_symbols = ''.join(ns.trim)
-  options = Options(trim_symbols, ns.split_on_hyphen, ns.consider_annotations,
-                    "/", True, True, 1.0)
+  options = Options(trim_symbols, ns.split_on_hyphen, True, True, 1.0)
 
   dictionary_instance, unresolved_words = get_pronunciations(vocabulary_words,
                                                              reference_dictionary_instance, options, ns.ignore_case, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
@@ -108,7 +105,7 @@ def get_pronunciations(vocabulary: OrderedSet[Word], lookup_dict: PronunciationD
   if lookup_ignore_case:
     mp_options = MultiprocessingOptions(n_jobs, maxtasksperchild, chunksize)
     change_word_casing(lookup_dict, "lower", 0.5, mp_options)
-  n_jobs = 1
+
   with Pool(
     processes=n_jobs,
     initializer=__init_pool_prepare_cache_mp,

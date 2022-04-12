@@ -4,7 +4,7 @@ import logging
 from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Generator, List, Tuple
-from dict_from_dict.from_lookup_dict import get_app_try_add_vocabulary_from_pronunciations_parser
+from dict_from_dict.main import get_app_try_add_vocabulary_from_pronunciations_parser
 
 __version__ = "0.0.1"
 

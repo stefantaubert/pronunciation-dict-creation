@@ -1,7 +1,7 @@
 #!/bin/bash
 
-prog_name="pronunciation-dict-creation-cli"
-cli_path=src/pronunciation_dict_creation/cli.py
+prog_name="dict-from-dict-cli"
+cli_path=src/dict_from_dict/cli.py
 
 mkdir -p ./dist
 

@@ -139,6 +139,13 @@ def parse_non_empty(value: Optional[str]) -> str:
   return value
 
 
+def parse_empty_or_none_or_one_char(value: str) -> str:
+  if value is None:
+    return value
+  if len(value) <= 1:
+    return value
+  raise ArgumentTypeError("Value can not have more than one character!")
+
 def parse_non_empty_or_whitespace(value: str) -> str:
   value = parse_required(value)
   if value.strip() == "":
