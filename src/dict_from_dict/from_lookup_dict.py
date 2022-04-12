@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from dataclasses import dataclass
 from tempfile import gettempdir
 from argparse import ArgumentParser, Namespace
 from logging import getLogger
@@ -9,9 +8,9 @@ from functools import partial
 from multiprocessing.pool import Pool
 from typing import Dict, List, Optional, Set, Tuple
 from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
-from word_to_pronunciation import get_pronunciations_from_word, Options, get_cached_lookup
+from word_to_pronunciation import get_pronunciations_from_word, Options
 from ordered_set import OrderedSet
-from pronunciation_dict_creation.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
+from dict_from_dict.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
 
 
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):

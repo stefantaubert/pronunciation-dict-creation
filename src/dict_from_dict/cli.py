@@ -3,8 +3,8 @@ import argparse
 import logging
 from argparse import ArgumentParser
 from logging import getLogger
-from typing import Callable, Dict, Generator, List, Tuple
-from pronunciation_dict_creation.from_lookup_dict import get_app_try_add_vocabulary_from_pronunciations_parser
+from typing import Callable, Generator, List, Tuple
+from dict_from_dict.from_lookup_dict import get_app_try_add_vocabulary_from_pronunciations_parser
 
 __version__ = "0.0.1"
 
@@ -54,6 +54,10 @@ def parse_args(args: List[str]):
   logger.debug("Received args:")
   logger.debug(args)
   parser = _init_parser()
+  if len(args) == 0:
+    parser.print_help()
+    return
+
   received_args = parser.parse_args(args)
   params = vars(received_args)
 

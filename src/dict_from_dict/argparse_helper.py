@@ -1,7 +1,6 @@
 import argparse
 import codecs
 from argparse import ArgumentParser, ArgumentTypeError
-from collections import OrderedDict
 from functools import partial
 from multiprocessing import cpu_count
 from pathlib import Path
