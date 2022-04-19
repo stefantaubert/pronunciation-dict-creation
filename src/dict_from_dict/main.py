@@ -7,7 +7,7 @@ from tqdm import tqdm
 from functools import partial
 from multiprocessing.pool import Pool
 from typing import Dict, Optional, Tuple
-from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict_to_file, get_dict_from_file, DeserializationOptions, SerializationOptions
+from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict, load_dict, DeserializationOptions, SerializationOptions
 from word_to_pronunciation import get_pronunciations_from_word, Options
 from ordered_set import OrderedSet
 from dict_from_dict.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
@@ -58,7 +58,7 @@ def get_pronunciations_files(ns: Namespace) -> bool:
   s_options = SerializationOptions(ns.parts_sep, ns.consider_numbers, ns.consider_weights)
 
   try:
-    reference_dictionary_instance = get_dict_from_file(
+    reference_dictionary_instance = load_dict(
       ns.reference_dictionary, ns.encoding, lp_options, mp_options)
   except Exception as ex:
     logger.error("Reference dictionary couldn't be read.")
@@ -72,7 +72,7 @@ def get_pronunciations_files(ns: Namespace) -> bool:
                                                              reference_dictionary_instance, options, ns.ignore_case, ns.n_jobs, ns.maxtasksperchild, ns.chunksize)
 
   try:
-    save_dict_to_file(dictionary_instance, ns.dictionary, ns.encoding, s_options)
+    save_dict(dictionary_instance, ns.dictionary, ns.encoding, s_options)
   except Exception as ex:
     logger.error("Dictionary couldn't be written.")
     return False

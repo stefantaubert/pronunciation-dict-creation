@@ -9,16 +9,15 @@ autopep8 = "*"
 pylint = "*"
 pycodestyle = "*"
 isort = "*"
-pipenv-setup = "*"
 rope = "*"
 pytest = "*"
 cx-freeze = "*"
 
 [packages]
-iterable-serialization = {editable = true, path = "./../iterable-serialization"}
-word-to-pronunciation = {editable = true, path = "./../word-to-pronunciation"}
-pronunciation-dictionary = {editable = true, path = "./../pronunciation-dictionary"}
-ordered-set = "*"
+iterable-serialization = ">=0.0.1"
+pronunciation-dictionary = ">=0.0.3"
+ordered-set = ">=4.1.0"
+word-to-pronunciation = ">=0.0.1"
 
 [requires]
 python_version = "3.8"
