@@ -133,3 +133,4 @@ dmypy.json
 .pyre/
 src/playground.py
 pyproject.toml
+deploy.sh
