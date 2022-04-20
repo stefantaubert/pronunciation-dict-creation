@@ -12,7 +12,7 @@ T = TypeVar("T")
 
 DEFAULT_ENCODING = "UTF-8"
 DEFAULT_N_JOBS = cpu_count()
-DEFAULT_CHUNKSIZE = 1000
+DEFAULT_CHUNKSIZE = 10000
 DEFAULT_MAXTASKSPERCHILD = None
 
 
@@ -40,7 +40,6 @@ class ConvertToOrderedSetAction(argparse._StoreAction):
     if values is not None:
       values = OrderedSet(values)
     super().__call__(parser, namespace, values, option_string)
-
 
 
 def add_io_group(parser: ArgumentParser) -> None:
@@ -145,6 +144,7 @@ def parse_empty_or_none_or_one_char(value: str) -> str:
   if len(value) <= 1:
     return value
   raise ArgumentTypeError("Value can not have more than one character!")
+
 
 def parse_non_empty_or_whitespace(value: str) -> str:
   value = parse_required(value)

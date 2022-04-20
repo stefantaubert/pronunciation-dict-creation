@@ -24,7 +24,7 @@ from dict_from_dict.argparse_helper import (DEFAULT_PUNCTUATION, ConvertToOrdere
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):
   default_oov_out = Path(gettempdir()) / "oov.txt"
   parser.description = "Transcribe vocabulary with a given pronunciation dictionary."
-  # todo support multiple files
+  # TODO support multiple files
   parser.add_argument("vocabulary", metavar='vocabulary', type=parse_existing_file,
                       help="file containing the vocabulary (words separated by line)")
   parser.add_argument("reference_dictionary", metavar='reference-dictionary', type=parse_existing_file,
@@ -95,9 +95,9 @@ def get_pronunciations_files(ns: Namespace) -> bool:
       try:
         ns.oov_out.write_text(unresolved_out_content, "UTF-8")
       except Exception as ex:
-        logger.error("Unresolved output couldn't be created!")
+        logger.error("Unresolved output file couldn't be created!")
         return False
-      logger.info(f"Written unresolved to: {ns.oov_out.absolute()}")
+      logger.info(f"Written unresolved vocabulary to: {ns.oov_out.absolute()}")
   else:
     logger.info("Complete vocabulary is contained in output!")
 
