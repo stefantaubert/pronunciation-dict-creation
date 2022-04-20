@@ -1,16 +1,24 @@
-from collections import OrderedDict
-from tempfile import gettempdir
 from argparse import ArgumentParser, Namespace
-from logging import getLogger
-from pathlib import Path
-from tqdm import tqdm
+from collections import OrderedDict
 from functools import partial
+from logging import getLogger
 from multiprocessing.pool import Pool
+from pathlib import Path
+from tempfile import gettempdir
 from typing import Dict, Optional, Tuple
-from pronunciation_dictionary import PronunciationDict, Word, Pronunciations, change_word_casing, MultiprocessingOptions, save_dict, load_dict, DeserializationOptions, SerializationOptions
-from word_to_pronunciation import get_pronunciations_from_word, Options
+
 from ordered_set import OrderedSet
-from dict_from_dict.argparse_helper import ConvertToOrderedSetAction, DEFAULT_PUNCTUATION, add_chunksize_argument, add_encoding_argument, add_io_group, add_maxtaskperchild_argument, add_n_jobs_argument, get_optional, parse_existing_file, parse_non_empty_or_whitespace, parse_path
+from pronunciation_dictionary import (DeserializationOptions, MultiprocessingOptions,
+                                      PronunciationDict, Pronunciations, SerializationOptions, Word,
+                                      change_word_casing, load_dict, save_dict)
+from tqdm import tqdm
+from word_to_pronunciation import Options, get_pronunciations_from_word
+
+from dict_from_dict.argparse_helper import (DEFAULT_PUNCTUATION, ConvertToOrderedSetAction,
+                                            add_chunksize_argument, add_encoding_argument,
+                                            add_io_group, add_maxtaskperchild_argument,
+                                            add_n_jobs_argument, get_optional, parse_existing_file,
+                                            parse_non_empty_or_whitespace, parse_path)
 
 
 def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser):
@@ -156,6 +164,7 @@ def process_get_pronunciation(word_i: int, ignore_case: bool, options: Options) 
   # TODO support all entries; also create all combinations with hyphen then
   lookup_method = partial(
     lookup_in_dict,
+    dictionary=process_lookup_dict,
     ignore_case=ignore_case,
   )
 
@@ -164,12 +173,11 @@ def process_get_pronunciation(word_i: int, ignore_case: bool, options: Options) 
   return word_i, pronunciations
 
 
-def lookup_in_dict(word: Word, ignore_case: bool) -> Pronunciations:
-  global process_lookup_dict
+def lookup_in_dict(word: Word, dictionary: PronunciationDict, ignore_case: bool) -> Pronunciations:
   if ignore_case:
     word = word.lower()
-  if word in process_lookup_dict:
-    result = process_lookup_dict[word]
+  if word in dictionary:
+    result = dictionary[word]
   else:
     result = OrderedDict()
   return result

@@ -16,8 +16,8 @@ cx-freeze = "*"
 [packages]
 iterable-serialization = ">=0.0.1"
 pronunciation-dictionary = ">=0.0.3"
-ordered-set = ">=4.1.0"
 word-to-pronunciation = ">=0.0.1"
+ordered-set = ">=4.1.0"
 
 [requires]
 python_version = "3.8"

@@ -1,6 +1,71 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel",
+]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "dict-from-dict"
+version = "0.0.1"
+description = "CLI to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+  {email = "stefan.taubert@posteo.me"},
+  {name = "Stefan Taubert"}
+]
+maintainers = [
+  {email = "stefan.taubert@posteo.me"},
+  {name = "Stefan Taubert"}
+]
+keywords = [
+  "Language",
+  "Linguistics"
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Operating System :: OS Independent",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX",
+  "Operating System :: POSIX :: BSD",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: Unix",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+  "iterable-serialization >= 0.0.1",
+  "pronunciation-dictionary >= 0.0.3",
+  "ordered-set >= 4.1.0",
+  "word-to-pronunciation >= 0.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/stefantaubert/pronunciation-dict-creation"
+Issues = "https://github.com/stefantaubert/pronunciation-dict-creation/issues"
+
+[project.scripts]
+dict-from-dict-cli = "dict_from_dict.cli:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = [
+  "dict_from_dict",
+]
+exclude = [
+  "dict_from_dict_tests",
+  "dict_from_dict_debug"
+]
+namespaces = true
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -8,10 +73,21 @@ log_level = "DEBUG"
 testpaths = [
   "src/dict_from_dict_tests",
 ]
-# slows down debugging
-#addopts=-n8
 
 [tool.autopep8]
 indent-size = 2
 ignore = ["E121"]
 max_line_length = 100
+
+[tool.isort]
+line_length = 100
+indent = 2
+known_first_party = [
+  "dict_from_dict",
+]
+known_third_party = [
+  "iterable_serialization",
+  "pronunciation_dictionary",
+  "ordered_set",
+  "word_to_pronunciation"
+]
