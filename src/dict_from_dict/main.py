@@ -10,7 +10,8 @@ from typing import Dict, Optional, Tuple
 from ordered_set import OrderedSet
 from pronunciation_dictionary import (DeserializationOptions, MultiprocessingOptions,
                                       PronunciationDict, Pronunciations, SerializationOptions, Word,
-                                      change_word_casing, load_dict, save_dict)
+                                      load_dict, save_dict)
+from pronunciation_dictionary_utils import change_word_casing
 from tqdm import tqdm
 from word_to_pronunciation import Options, get_pronunciations_from_word
 

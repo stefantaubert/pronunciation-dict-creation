@@ -44,7 +44,8 @@ classifiers = [
 ]
 dependencies = [
   "iterable-serialization >= 0.0.1",
-  "pronunciation-dictionary >= 0.0.3",
+  "pronunciation-dictionary >= 0.0.4",
+  "pronunciation-dictionary-utils >=0.0.1",
   "ordered-set >= 4.1.0",
   "word-to-pronunciation >= 0.0.1",
 ]
@@ -88,6 +89,7 @@ known_first_party = [
 known_third_party = [
   "iterable_serialization",
   "pronunciation_dictionary",
+  "pronunciation_dictionary_utils",
   "ordered_set",
   "word_to_pronunciation"
 ]
