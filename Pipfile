@@ -11,6 +11,8 @@ pycodestyle = "*"
 isort = "*"
 rope = "*"
 pytest = "*"
+autoflake = "*"
+build = "*"
 
 [packages]
 iterable-serialization = ">=0.0.1"

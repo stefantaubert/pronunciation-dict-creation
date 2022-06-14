@@ -3,8 +3,11 @@
 [![PyPI](https://img.shields.io/pypi/v/dict-from-dict.svg)](https://pypi.python.org/pypi/dict-from-dict)
 [![PyPI](https://img.shields.io/pypi/pyversions/dict-from-dict.svg)](https://pypi.python.org/pypi/dict-from-dict)
 [![MIT](https://img.shields.io/github/license/stefantaubert/pronunciation-dict-creation.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/wheel/dict-from-dict.svg)](https://pypi.python.org/pypi/dict-from-dict)
+[![PyPI](https://img.shields.io/pypi/implementation/dict-from-dict.svg)](https://pypi.python.org/pypi/dict-from-dict)
+[![PyPI](https://img.shields.io/github/commits-since/stefantaubert/pronunciation-dict-creation/latest/master.svg)](https://pypi.python.org/pypi/dict-from-dict)
 
-CLI to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup.
+Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup.
 
 ## Features
 
@@ -86,4 +89,27 @@ cat /tmp/oov.txt
 # -------
 # abc,
 # -------
+```
+
+## License
+
+MIT License
+
+## Acknowledgments
+
+Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) – Project-ID 416228727 – CRC 1410
+
+## Citation
+
+If you want to cite this repo, you can use this BibTeX-entry:
+
+```bibtex
+@misc{tsdfd22,
+  author = {Taubert, Stefan},
+  title = {dict-from-dict},
+  year = {2022},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/stefantaubert/pronunciation-dict-creation}}
+}
 ```

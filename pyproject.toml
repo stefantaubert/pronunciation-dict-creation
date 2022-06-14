@@ -1,16 +1,9 @@
-[build-system]
-requires = [
-  "setuptools >= 40.9.0",
-  "wheel",
-]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "dict-from-dict"
-version = "0.0.1"
-description = "CLI to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
+version = "0.0.2"
+description = "Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
   {email = "stefan.taubert@posteo.me"},
@@ -35,8 +28,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.6",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -93,3 +84,25 @@ known_third_party = [
   "ordered_set",
   "word_to_pronunciation"
 ]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py{38,39,310}
+isolated_build = true
+
+[testenv]
+deps = 
+  pytest
+commands = 
+  pytest
+  dict-from-dict-cli
+  dict-from-dict-cli -v
+"""
+
+[build-system]
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel",
+]
+build-backend = "setuptools.build_meta"
