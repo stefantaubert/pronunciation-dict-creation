@@ -1,15 +1,14 @@
 import argparse
+import importlib.metadata
 import logging
 import sys
 from argparse import ArgumentParser
 from logging import getLogger
 from typing import Callable, Generator, List, Tuple
 
-import importlib_metadata
-
 from dict_from_dict.main import get_app_try_add_vocabulary_from_pronunciations_parser
 
-__version__ = importlib_metadata.version("dict-from-dict")
+__version__ = importlib.metadata.version("dict-from-dict")
 
 INVOKE_HANDLER_VAR = "invoke_handler"
 

@@ -52,9 +52,9 @@ dict-from-dict-cli = "dict_from_dict.cli:run"
 where = ["src"]
 include = [
   "dict_from_dict",
+  "dict_from_dict_tests",
 ]
 exclude = [
-  "dict_from_dict_tests",
   "dict_from_dict_debug"
 ]
 namespaces = true
