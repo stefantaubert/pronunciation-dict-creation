@@ -16,7 +16,6 @@ build = "*"
 tox = "*"
 
 [packages]
-iterable-serialization = ">=0.0.1"
 pronunciation-dictionary = ">=0.0.4"
 word-to-pronunciation = ">=0.0.1"
 ordered-set = ">=4.1.0"

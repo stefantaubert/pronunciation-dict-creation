@@ -34,7 +34,6 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "iterable-serialization >= 0.0.1",
   "pronunciation-dictionary >= 0.0.4",
   "pronunciation-dictionary-utils >=0.0.1",
   "ordered-set >= 4.1.0",
@@ -78,7 +77,6 @@ known_first_party = [
   "dict_from_dict",
 ]
 known_third_party = [
-  "iterable_serialization",
   "pronunciation_dictionary",
   "pronunciation_dictionary_utils",
   "ordered_set",
