@@ -52,7 +52,7 @@ test  0.3  T E1 S T
 def  0.4  D E0 F
 def  0.6  D E1 F
 xyz  2.0  ?
-"xyz?  1.0  " X Y Z ?
+"xyz?  1.0  ' X Y Z ??
 uv  2.0  ?
 w  2.0  ?
 uv-w  1.0  U V - W
@@ -64,6 +64,7 @@ dict-from-dict-cli \
   /tmp/dictionary.dict --consider-weights \
   /tmp/result.dict \
   --ignore-case --split-on-hyphen \
+  --trim "?" "\"" "," "." \
   --n-jobs 4 \
   --oov-out /tmp/oov.txt
 
@@ -71,16 +72,16 @@ cat /tmp/result.dict
 # -------
 # Output:
 # -------
-# Test?  0.7  T E0 S T ?
-# Test?  0.3  T E1 S T ?
-# "def  0.4  " D E0 F
-# "def  0.6  " D E1 F
-# Test-def.  0.27999999999999997  T E0 S T - D E0 F .
-# Test-def.  0.42  T E0 S T - D E1 F .
-# Test-def.  0.12  T E1 S T - D E0 F .
-# Test-def.  0.18  T E1 S T - D E1 F .
-# "xyz?  1.0  " X Y Z ?
-# "uv-w?  1.0  " U V - W ?
+Test?  0.7  T E0 S T ?
+Test?  0.3  T E1 S T ?
+"def  0.4  " D E0 F
+"def  0.6  " D E1 F
+Test-def.  0.27999999999999997  T E0 S T - D E0 F .
+Test-def.  0.42  T E0 S T - D E1 F .
+Test-def.  0.12  T E1 S T - D E0 F .
+Test-def.  0.18  T E1 S T - D E1 F .
+"xyz?  1.0  ' X Y Z ??
+"uv-w?  1.0  " U V - W ?
 # -------
 
 cat /tmp/oov.txt
