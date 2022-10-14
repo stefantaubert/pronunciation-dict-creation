@@ -26,11 +26,11 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
   default_oov_out = Path(gettempdir()) / "oov.txt"
   parser.description = "Transcribe vocabulary with a given pronunciation dictionary."
   # TODO support multiple files
-  parser.add_argument("vocabulary", metavar='vocabulary', type=parse_existing_file,
+  parser.add_argument("vocabulary", metavar='VOCABULARY', type=parse_existing_file,
                       help="file containing the vocabulary (words separated by line)")
-  parser.add_argument("reference_dictionary", metavar='reference-dictionary', type=parse_existing_file,
+  parser.add_argument("reference_dictionary", metavar='REFERENCE-DICTIONARY', type=parse_existing_file,
                       help="file containing the reference pronunciation dictionary")
-  parser.add_argument("dictionary", metavar='dictionary', type=parse_path,
+  parser.add_argument("dictionary", metavar='DICTIONARY', type=parse_path,
                       help="path to output created dictionary")
   parser.add_argument("--ignore-case", action="store_true",
                       help="ignore case while looking up in reference-dictionary")
