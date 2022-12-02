@@ -114,7 +114,7 @@ def get_pronunciations(vocabulary: OrderedSet[Word], lookup_dict: PronunciationD
 
   if lookup_ignore_case:
     mp_options = MultiprocessingOptions(n_jobs, maxtasksperchild, chunksize)
-    change_word_casing(lookup_dict, "lower", 0.5, mp_options)
+    change_word_casing(lookup_dict, "lower", mp_options)
 
   with Pool(
     processes=n_jobs,

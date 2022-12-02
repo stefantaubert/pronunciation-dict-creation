@@ -3,14 +3,14 @@ name = "dict-from-dict"
 version = "0.0.2"
 description = "Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.8, <=3.11"
 license = {text = "MIT"}
 authors = [
-  {email = "stefan.taubert@posteo.me"},
+  {email = "pypi@stefantaubert.com"},
   {name = "Stefan Taubert"}
 ]
 maintainers = [
-  {email = "stefan.taubert@posteo.me"},
+  {email = "pypi@stefantaubert.com"},
   {name = "Stefan Taubert"}
 ]
 keywords = [
@@ -34,10 +34,10 @@ classifiers = [
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "pronunciation-dictionary >= 0.0.4",
-  "pronunciation-dictionary-utils >=0.0.1",
-  "ordered-set >= 4.1.0",
+  "pronunciation-dictionary >= 0.0.5",
+  "pronunciation-dictionary-utils >=0.0.2",
   "word-to-pronunciation >= 0.0.1",
+  "ordered-set >= 4.1.0",
 ]
 
 [project.urls]
@@ -83,10 +83,25 @@ known_third_party = [
   "word_to_pronunciation"
 ]
 
+[tool.pyright]
+root = ["src"]
+include = ["src"]
+pythonPlatform = "All"
+typeCheckingMode = "off"
+stubPath = ""
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  ".git",
+  "**/*.egg-info",
+  "**/*_debug",
+]
+useLibraryCodeForTypes = true
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,39,310}
+envlist = py{38,39,310,311}
 isolated_build = true
 
 [testenv]
