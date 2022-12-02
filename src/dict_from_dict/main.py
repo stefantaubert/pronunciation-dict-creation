@@ -38,7 +38,7 @@ def get_app_try_add_vocabulary_from_pronunciations_parser(parser: ArgumentParser
                       help="trim these symbols from the start and end of a word before looking it up in the reference pronunciation dictionary", action=ConvertToOrderedSetAction, default=DEFAULT_PUNCTUATION)
   parser.add_argument("--split-on-hyphen", action="store_true",
                       help="split words on hyphen symbol before lookup")
-  parser.add_argument("--oov-out", metavar="PATH", type=get_optional(parse_path),
+  parser.add_argument("--oov-out", metavar="OOV-PATH", type=get_optional(parse_path),
                       help="write out-of-vocabulary (OOV) words (i.e., words that did not exist in the reference dictionary) to this file (encoding will be the same as the one from the vocabulary file)", default=default_oov_out)
   add_encoding_argument(parser, "--vocabulary-encoding", "encoding of vocabulary")
   add_io_group(parser)

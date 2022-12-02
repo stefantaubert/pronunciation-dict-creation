@@ -1,6 +1,6 @@
 [project]
 name = "dict-from-dict"
-version = "0.0.2"
+version = "0.0.3"
 description = "Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
 readme = "README.md"
 requires-python = ">=3.8, <=3.11"
@@ -31,6 +31,7 @@ classifiers = [
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
