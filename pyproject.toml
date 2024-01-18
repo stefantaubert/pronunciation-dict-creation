@@ -3,20 +3,14 @@ name = "dict-from-dict"
 version = "0.0.3"
 description = "Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
 readme = "README.md"
-requires-python = ">=3.8, <=3.11"
-license = {text = "MIT"}
-authors = [
-  {email = "pypi@stefantaubert.com"},
-  {name = "Stefan Taubert"}
-]
+requires-python = ">=3.8, <3.12"
+license = { text = "MIT" }
+authors = [{ email = "pypi@stefantaubert.com" }, { name = "Stefan Taubert" }]
 maintainers = [
-  {email = "pypi@stefantaubert.com"},
-  {name = "Stefan Taubert"}
+  { email = "pypi@stefantaubert.com" },
+  { name = "Stefan Taubert" },
 ]
-keywords = [
-  "Language",
-  "Linguistics"
-]
+keywords = ["Language", "Linguistics"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Operating System :: OS Independent",
@@ -50,21 +44,14 @@ dict-from-dict-cli = "dict_from_dict.cli:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = [
-  "dict_from_dict",
-  "dict_from_dict_tests",
-]
-exclude = [
-  "dict_from_dict_debug"
-]
+include = ["dict_from_dict", "dict_from_dict_tests"]
+exclude = ["dict_from_dict_debug"]
 namespaces = true
 
 [tool.pytest.ini_options]
 log_cli = true
 log_level = "DEBUG"
-testpaths = [
-  "src/dict_from_dict_tests",
-]
+testpaths = ["src/dict_from_dict_tests"]
 
 [tool.autopep8]
 indent-size = 2
@@ -74,14 +61,12 @@ max_line_length = 100
 [tool.isort]
 line_length = 100
 indent = 2
-known_first_party = [
-  "dict_from_dict",
-]
+known_first_party = ["dict_from_dict"]
 known_third_party = [
   "pronunciation_dictionary",
   "pronunciation_dictionary_utils",
   "ordered_set",
-  "word_to_pronunciation"
+  "word_to_pronunciation",
 ]
 
 [tool.pyright]
@@ -115,8 +100,5 @@ commands =
 """
 
 [build-system]
-requires = [
-  "setuptools >= 40.9.0",
-  "wheel",
-]
+requires = ["setuptools >= 40.9.0", "wheel"]
 build-backend = "setuptools.build_meta"

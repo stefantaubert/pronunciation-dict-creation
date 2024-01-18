@@ -4,7 +4,7 @@ from collections import OrderedDict
 from ordered_set import OrderedSet
 from word_to_pronunciation import Options
 
-from dict_from_dict.main import get_pronunciations
+from dict_from_dict.core import get_pronunciations
 
 
 def test_component():
@@ -25,7 +25,8 @@ def test_component():
   ))
   options = Options("?,\".", True, True, True, 1.0)
 
-  result_dict, result_oov = get_pronunciations(vocabulary, dictionary, options, True, 1, None, 4)
+  result_dict, result_oov = get_pronunciations(
+    vocabulary, dictionary, options, True, 1, None, 4, silent=True)
 
   assert len(result_dict) == 3
   assert len(result_oov) == 1

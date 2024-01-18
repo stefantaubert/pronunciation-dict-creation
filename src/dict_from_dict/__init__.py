@@ -1,1 +1,1 @@
-#
+from dict_from_dict.core import create_dict_from_dict
