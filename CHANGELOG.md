@@ -12,10 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Support for Python 3.12
+- `create_dict_from_dict`
 
 ### Changed
 
 - Logging method
+- Updated dependencies
 
 ## [0.0.3] - 2022-12-02
 
