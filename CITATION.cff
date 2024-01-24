@@ -12,8 +12,8 @@ authors:
     affiliation: Chemnitz University of Technology
     orcid: 'https://orcid.org/0000-0002-4932-2874'
     website: 'https://stefantaubert.com/'
-version: 0.0.3
-date-released: 2022-12-02
+version: 0.0.4
+date-released: 2024-01-24
 license: MIT
 url: https://github.com/stefantaubert/pronunciation-dict-creation
-doi: 10.5281/zenodo.7390742
+doi: 10.5281/zenodo.10560441

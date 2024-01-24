@@ -1,9 +1,9 @@
 [project]
 name = "dict-from-dict"
-version = "0.0.3"
+version = "0.0.4"
 description = "Command-line interface (CLI) to create a pronunciation dictionary from an other pronunciation dictionary with the possibility of ignoring punctuation and splitting on hyphens before lookup."
 readme = "README.md"
-requires-python = ">=3.8, <3.12"
+requires-python = ">=3.8, <3.13"
 license = { text = "MIT" }
 authors = [{ email = "pypi@stefantaubert.com" }, { name = "Stefan Taubert" }]
 maintainers = [
@@ -26,11 +26,12 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-  "pronunciation-dictionary >= 0.0.5",
-  "pronunciation-dictionary-utils >=0.0.2",
+  "pronunciation-dictionary >= 0.0.6",
+  "pronunciation-dictionary-utils >=0.0.5",
   "word-to-pronunciation >= 0.0.1",
   "ordered-set >= 4.1.0",
 ]
@@ -87,7 +88,7 @@ useLibraryCodeForTypes = true
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py{38,39,310,311}
+envlist = py{38,39,310,311,312}
 isolated_build = true
 
 [testenv]

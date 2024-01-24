@@ -10,7 +10,9 @@ from tqdm import tqdm
 from word_to_pronunciation import Options, get_pronunciations_from_word
 
 
-def create_dict_from_dict(vocabulary_words: OrderedSet[Word], reference_dict: PronunciationDict, trim: Set, split_on_hyphen: bool, ignore_case: bool, n_jobs: int, maxtasksperchild: Optional[int], chunksize: int, silent: bool = False) -> Tuple[PronunciationDict, OrderedSet[Word]]:
+def create_dict_from_dict(vocabulary_words: OrderedSet[Word], reference_dict: PronunciationDict, trim: Optional[Set[str]], split_on_hyphen: bool = True, ignore_case: bool = True, n_jobs: int = 1, maxtasksperchild: Optional[int] = None, chunksize: int = 100_000, silent: bool = False) -> Tuple[PronunciationDict, OrderedSet[Word]]:
+  if trim is None:
+    trim = set()
   trim_symbols = ''.join(trim)
   options = Options(trim_symbols, split_on_hyphen, True, True, 1.0)
 

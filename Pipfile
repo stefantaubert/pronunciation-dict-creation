@@ -16,8 +16,8 @@ build = "*"
 tox = "*"
 
 [packages]
-pronunciation-dictionary = ">=0.0.5"
-pronunciation-dictionary-utils = ">=0.0.2"
+pronunciation-dictionary = ">=0.0.6"
+pronunciation-dictionary-utils = ">=0.0.5"
 word-to-pronunciation = ">=0.0.1"
 ordered-set = ">=4.1.0"
 
